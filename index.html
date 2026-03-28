@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Scanner v5 — XAU/USD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#050810;color:#b8ccd8;font-family:'IBM Plex Mono',monospace;min-height:100vh;
+    background-image:radial-gradient(ellipse at 10% 0%,#0a1628 0%,transparent 50%)}
+  .wrap{max-width:840px;margin:0 auto;padding:18px 12px}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .fade{animation:fadeUp .5s ease}
+  .spinner{display:inline-block;width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.05);border-top:2px solid #d4a853;animation:spin 1s linear infinite}
+  button{cursor:pointer;font-family:'IBM Plex Mono',monospace;border:none;transition:all .2s}
+  input{font-family:'IBM Plex Mono',monospace;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#b8ccd8;padding:8px 12px;border-radius:8px;width:100%}
+  ::-webkit-scrollbar{width:3px}
+  ::-webkit-scrollbar-thumb{background:#1e3050}
+  .card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:14px;margin-bottom:12px}
+  .label{font-size:9px;color:#4a7090;letter-spacing:3px;font-weight:700;margin-bottom:8px}
+  .badge-h{background:rgba(0,255,136,.1);border:1px solid #00ff8833;color:#00ff88;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700}
+  .badge-b{background:rgba(255,68,102,.1);border:1px solid #ff446633;color:#ff4466;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700}
+  .badge-n{background:rgba(255,204,68,.07);border:1px solid #ffcc4425;color:#ffcc44;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700}
+  .session-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+  .session-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:10px 12px}
+  .session-active{box-shadow:0 0 18px var(--sc)}
+  .market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .market-card{background:rgba(0,0,0,.35);border-radius:10px;padding:10px 12px}
+  .dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .sbar-wrap{display:flex;align-items:center;gap:8px}
+  .sbar-bg{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+  .news-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .news-item:last-child{border-bottom:none}
+  .niv-card{border-radius:6px;padding:7px 10px;margin-bottom:5px;border-left:3px solid}
+  .fj-panel{background:rgba(255,255,255,.02);border:1px solid rgba(255,180,0,.2);border-radius:12px;padding:14px;margin-bottom:12px}
+  .level-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .mf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .mf-card{border-radius:8px;padding:10px 12px}
+  .alert-card{border-radius:10px;padding:10px 14px;margin-bottom:8px}
+  .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .tab{padding:7px 14px;font-size:10px;letter-spacing:1px;font-weight:700;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);color:#2a4060}
+  .tab.active{border-color:var(--sc)44}
+  .hist-list{display:flex;gap:8px;flex-wrap:wrap}
+  .hist-item{border-radius:8px;padding:8px 12px}
+  #key-section{background:rgba(212,168,83,.08);border:1px solid #d4a85333;border-radius:12px;padding:16px;margin-bottom:16px}
+  .key-input-wrap{display:flex;gap:8px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div style="margin-bottom:14px">
+    <div style="font-size:9px;color:#1a4530;letter-spacing:4px;margin-bottom:3px">◈ GOLD SCANNER v5 · GEMINI · VIX OVERRIDE · 24H</div>
+    <h1 style="font-size:22px;font-family:'Syne',sans-serif;font-weight:800;background:linear-gradient(120deg,#c8922a,#f0c060,#9a6820);-webkit-background-clip:text;-webkit-text-fill-color:transparent">GOLD SESSION SCANNER</h1>
+    <p style="font-size:9px;color:#2a4560;letter-spacing:1.5px;margin-top:4px">GEMINI FLASH · RÉGIME REFUGE · VIX OVERRIDE · FINANCIALJUICE</p>
+  </div>
+
+  <!-- API Key Section -->
+  <div id="key-section">
+    <div style="font-size:10px;color:#d4a853;font-weight:700;letter-spacing:2px;margin-bottom:6px">🔑 CLÉ API GEMINI</div>
+    <div style="font-size:11px;color:#7a6030;margin-bottom:8px">Colle ta clé API Gemini (commence par AIza...) — elle sera sauvegardée dans ton navigateur</div>
+    <div class="key-input-wrap">
+      <input type="password" id="apiKeyInput" placeholder="AIza..." />
+      <button onclick="saveKey()" style="padding:8px 14px;background:rgba(212,168,83,.2);border:1px solid #d4a85344;border-radius:8px;color:#d4a853;font-size:11px;font-weight:700;white-space:nowrap">💾 Sauver</button>
+    </div>
+    <div id="keyStatus" style="font-size:10px;margin-top:6px;color:#4a6030"></div>
+  </div>
+
+  <!-- Sessions -->
+  <div class="session-grid" id="sessionGrid"></div>
+
+  <!-- FJ Panel -->
+  <div class="fj-panel" id="fjPanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="fjIcon" style="font-size:12px">🔴</span>
+        <span style="font-size:10px;color:#d4a853;font-weight:700;letter-spacing:2px">FINANCIALJUICE</span>
+        <span id="fjTime" style="font-size:9px;color:#2a4050"></span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="loadFJ()" style="font-size:9px;padding:3px 8px;background:rgba(255,170,0,.1);border:1px solid #ffaa0033;border-radius:4px;color:#ffaa00;font-weight:700">↻ MAJ</button>
+        <button onclick="runAnalysis()" style="font-size:9px;padding:3px 8px;background:rgba(0,255,136,.1);border:1px solid #00ff8833;border-radius:4px;color:#00ff88;font-weight:700">⚡ ANALYSER</button>
+      </div>
+    </div>
+    <div id="fjContent" style="font-size:10px;color:#3a5570">Clique ↻ MAJ pour charger les headlines...</div>
+  </div>
+
+  <!-- Session Tips -->
+  <div id="sessionTips" class="card" style="margin-bottom:12px"></div>
+
+  <!-- Controls -->
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button id="scanBtn" onclick="runAnalysis()" style="flex:1;padding:12px 0;background:linear-gradient(135deg,rgba(0,255,136,.13),rgba(0,255,136,.05));border:1px solid rgba(0,255,136,.44);border-radius:10px;color:#00ff88;font-size:12px;letter-spacing:2px;font-weight:700">⚡ ANALYSER MAINTENANT</button>
+    <button id="autoBtn" onclick="toggleAuto()" style="padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;color:#2a4060;font-size:10px;letter-spacing:2px;font-weight:600">○ AUTO</button>
+    <button onclick="toggleMock()" id="mockBtn" style="padding:12px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;color:#2a4060;font-size:9px;font-weight:700">○ MOCK</button>
+  </div>
+
+  <div id="lastUpd" style="font-size:9px;color:#1e3040;text-align:right;margin-bottom:10px;letter-spacing:2px"></div>
+
+  <!-- Loader -->
+  <div id="loader" style="display:none" class="card">
+    <div style="text-align:center;margin-bottom:14px">
+      <div class="spinner" style="margin-bottom:10px"></div>
+      <div style="font-size:11px;color:#3a5570;letter-spacing:2px">SCAN EN COURS</div>
+    </div>
+    <div id="steps"></div>
+  </div>
+
+  <!-- Error -->
+  <div id="errBox" style="display:none;background:rgba(255,50,50,.06);border:1px solid #ff446622;border-radius:10px;padding:12px;color:#ff6680;font-size:11px;margin-bottom:12px"></div>
+
+  <!-- Result -->
+  <div id="result" style="display:none" class="fade">
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="signal" onclick="switchTab('signal',this)">📊 Signal</button>
+      <button class="tab" data-tab="history" onclick="switchTab('history',this)">🕐 Historique</button>
+    </div>
+
+    <!-- Tab Signal -->
+    <div id="tab-signal">
+      <div id="vixOverride" style="display:none;background:rgba(255,200,0,.08);border:1px solid #ffcc4433;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+        <span style="font-size:10px;color:#ffcc44;font-weight:700">⚡ VIX OVERRIDE — </span>
+        <span style="font-size:11px;color:#aa8830">Régime forcé DOLLAR REFUGE car VIX élevé. BUY ignoré.</span>
+      </div>
+      <div id="alertsBox"></div>
+      <div id="regimeBox" class="card" style="margin-bottom:12px"></div>
+      <div id="mfBox" class="card" style="margin-bottom:12px"></div>
+      <div id="signalBox" style="background:rgba(0,0,0,.55);border-radius:14px;padding:20px 22px;margin-bottom:12px;position:relative;overflow:hidden"></div>
+      <div id="marketsBox" class="card" style="margin-bottom:12px"></div>
+      <div class="dim-grid">
+        <div class="card" id="newsBox"></div>
+        <div class="card" id="dimsBox"></div>
+      </div>
+      <div class="card" id="levelsBox" style="margin-bottom:10px"></div>
+      <div style="font-size:9px;color:#1a2e40;text-align:center;letter-spacing:1px;margin-bottom:16px">⚠ OUTIL D'AIDE À LA DÉCISION · PAS UN CONSEIL FINANCIER · STOP-LOSS OBLIGATOIRE</div>
+    </div>
+
+    <!-- Tab History -->
+    <div id="tab-history" style="display:none">
+      <div class="card"><div class="label">▸ HISTORIQUE SIGNAUX</div><div class="hist-list" id="histList"></div></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const SESSIONS = {
+  ASIE:     {id:"ASIE",    label:"SESSION ASIE",    heures:"23h00→07h00",start:23,end:7, color:"#ff6644",bg:"rgba(255,100,68,0.12)",icon:"🌏",alerte:"CRITIQUE",refresh:2,
+    tips:["Moves les plus VIOLENTS — liquidité faible","Réaction aux news week-end/nuit","Gaps et spikes extrêmes"]},
+  EUROPE:   {id:"EUROPE",  label:"SESSION EUROPE",  heures:"07h00→16h00",start:7, end:16,color:"#44aaff",bg:"rgba(68,170,255,0.1)", icon:"🌍",alerte:"ÉLEVÉ",   refresh:3,
+    tips:["Confirmation move asiatique","Ouverture Londres 08h = volatile","Zone décision avant Wall Street"]},
+  AMERIQUE: {id:"AMERIQUE",label:"SESSION AMÉRIQUE",heures:"13h30→22h00",start:13,end:22,color:"#00ff88",bg:"rgba(0,255,136,0.08)", icon:"🌎",alerte:"ÉLEVÉ",   refresh:3,
+    tips:["Ouverture Wall Street 15h30","Trump poste 13h-17h Paris","Données macro US = impact majeur"]},
+};
+const SC={BUY:"#00ff88",SELL:"#ff4466",WAIT:"#ffcc44"};
+const SI={BUY:"▲",SELL:"▼",WAIT:"●"};
+const RC={
+  DOLLAR_REFUGE:{color:"#4488ff",bg:"rgba(68,136,255,0.12)",icon:"💵",label:"DOLLAR = VALEUR REFUGE · APPELS DE MARGE"},
+  OR_REFUGE:{color:"#d4a853",bg:"rgba(212,168,83,0.1)",icon:"🥇",label:"OR = VALEUR REFUGE"},
+  RISK_ON:{color:"#ff6644",bg:"rgba(255,100,68,0.1)",icon:"🔥",label:"RISK-ON · MARCHÉS OPTIMISTES"},
+};
+const STEPS_LIST=["Identification session","Régime refuge A/B/C","Scan Trump / FJ","US30 + VIX + DXY","Prix or XAU/USD","Signal final H1/H4"];
+
+let apiKey = localStorage.getItem('gemini_key') || '';
+let autoMode = false;
+let mockMode = false;
+let autoTimer = null;
+let history = [];
+let currentResult = null;
+let fjData = null;
+let currentTab = 'signal';
+
+// ═══════════════════════════════════════
+// KEY MANAGEMENT
+// ═══════════════════════════════════════
+function saveKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('AIza')) { document.getElementById('keyStatus').textContent = '❌ Clé invalide — doit commencer par AIza...'; return; }
+  apiKey = val;
+  localStorage.setItem('gemini_key', val);
+  document.getElementById('keyStatus').innerHTML = '✅ Clé sauvegardée !';
+  document.getElementById('key-section').style.display = 'none';
+}
+
+function initKey() {
+  if (apiKey) {
+    document.getElementById('apiKeyInput').value = apiKey;
+    document.getElementById('key-section').style.display = 'none';
+    document.getElementById('keyStatus').textContent = '✅ Clé chargée';
+  }
+}
+
+// ═══════════════════════════════════════
+// SESSION CLOCK
+// ═══════════════════════════════════════
+function getSessionId() {
+  const h = parseInt(new Date().toLocaleString('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit'}));
+  if (h>=23||h<7) return 'ASIE';
+  if (h>=7&&h<16) return 'EUROPE';
+  return 'AMERIQUE';
+}
+
+function renderSessions() {
+  const sid = getSessionId();
+  const s = SESSIONS[sid];
+  document.getElementById('sessionGrid').innerHTML = Object.values(SESSIONS).map(sess => {
+    const act = sess.id === sid;
+    const now = new Date().toLocaleTimeString('fr-FR',{timeZone:'Europe/Paris'});
+    return `<div class="session-card ${act?'session-active':''}" style="${act?`background:${sess.bg};border:1px solid ${sess.color}55;--sc:${sess.color}`:''}">
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:16px">${sess.icon}</span>
+        ${act?`<span style="font-size:8px;color:${sess.color};font-weight:700;animation:pulse 1.5s infinite">● LIVE</span>`:''}
+      </div>
+      <div style="font-size:9px;color:${act?sess.color:'#1e3040'};font-weight:700;letter-spacing:1px;margin-top:4px">${sess.id}</div>
+      <div style="font-size:8px;color:${act?sess.color+'88':'#1a2838'}">${sess.heures}</div>
+      ${act?`<div style="font-size:12px;color:${sess.color};font-family:monospace;margin-top:4px">${now}</div>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('sessionTips').innerHTML = `
+    <div style="font-size:9px;color:${s.color};letter-spacing:2px;font-weight:700;margin-bottom:6px">${s.icon} ${s.label} · ${s.heures} · ⚡ ${s.alerte}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">
+      ${s.tips.map(t=>`<span style="font-size:9px;color:${s.color}88;background:${s.color}0d;border:1px solid ${s.color}22;border-radius:4px;padding:2px 7px">${t}</span>`).join('')}
+    </div>`;
+
+  const btn = document.getElementById('scanBtn');
+  btn.style.background = `linear-gradient(135deg,${s.color}22,${s.color}0a)`;
+  btn.style.borderColor = s.color+'44';
+  btn.style.color = s.color;
+  btn.textContent = `${s.icon}  ANALYSER — SESSION ${sid}`;
+}
+
+// ═══════════════════════════════════════
+// PROMPT BUILDER
+// ═══════════════════════════════════════
+function buildPrompt(sid) {
+  const s = SESSIONS[sid];
+  const fjContext = fjData && fjData.h ? 'Headlines recentes: '+fjData.h.slice(0,4).map(h=>h.t).join(' | ') : '';
+  return `Tu es expert XAU/USD. Session: ${sid} (${s.heures} Paris). ${fjContext}
+
+REGIME (priorite absolue):
+- VIX>25 OU guerre active OU or baissier 2+ semaines = DOLLAR_REFUGE
+- DOLLAR_REFUGE: VIX monte = dollar monte = OR BAISSE toujours
+- DOLLAR_REFUGE: US30 remonte apres crash = fin appels marge = OR rebondit
+- OR_REFUGE seulement si VIX<20 ET pas de guerre ET or haussier
+- RISK_ON si marches calmes VIX<18
+
+Utilise ta connaissance actuelle des marches. Fournis une analyse complete.
+
+Reponds UNIQUEMENT avec ce JSON sur une ligne (zero apostrophe, textes tres courts):
+{"sig":"BUY|SELL|WAIT","conf":75,"reg":"DOLLAR_REFUGE","reg_note":"raison courte","vix":"31","vix_dir":"monte","us30":"45800","us30_var":"-1.7%","dxy":"99.8","y10":"4.41%","xau":"4380","xau_var":"-2.1%","trump":"post recent ou rien","fed":"annonce Fed","geo":"Iran Hormuz","h1":"SELL","h4":"SELL","h1_note":"raison H1","h4_note":"raison H4","entree":"4400-4420","sl":"4480","tp":"4200","resume":"signal 20 mots max","alerte":"alerte principale"}`;
+}
+
+// ═══════════════════════════════════════
+// JSON CLEANER
+// ═══════════════════════════════════════
+function cleanJson(str) {
+  let out='',inStr=false,esc=false;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(esc){out+=c;esc=false;continue;}
+    if(c==='\\'){out+=c;esc=true;continue;}
+    if(c==='"'){inStr=!inStr;out+=c;continue;}
+    if(inStr){
+      if(c==="'"){out+=' ';continue;}
+      if(c.charCodeAt(0)<32){out+=' ';continue;}
+    } else {
+      if(c==='\n'||c==='\r'){out+=' ';continue;}
+    }
+    out+=c;
+  }
+  return out.replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
+}
+
+function parseResp(txt) {
+  const s=txt.indexOf('{'),e=txt.lastIndexOf('}');
+  if(s===-1) throw new Error('JSON introuvable');
+  const slice=txt.slice(s,e+1);
+  try{return JSON.parse(slice);}catch(e1){
+    try{return JSON.parse(cleanJson(slice));}catch(e2){
+      return {
+        sig:(slice.match(/"sig"\s*:\s*"(BUY|SELL|WAIT)"/)|| [])[1]||'WAIT',
+        conf:55,reg:'DOLLAR_REFUGE',reg_note:'Extrait auto',
+        vix:'?',vix_dir:'stable',us30:'?',us30_var:'?',dxy:'?',y10:'?',xau:'?',xau_var:'?',
+        trump:'',fed:'',geo:'',h1:'WAIT',h4:'WAIT',h1_note:'',h4_note:'',
+        entree:'Voir chart',sl:'SL strict',tp:'TP chart',rr:'?',
+        resume:'JSON corrompu - signal extrait auto',alerte:'Verifier manuellement'
+      };
+    }
+  }
+}
+
+// ═══════════════════════════════════════
+// GEMINI API CALL
+// ═══════════════════════════════════════
+async function callGemini(systemPrompt, userMsg, maxTokens=600) {
+  if (!apiKey) throw new Error('Clé API manquante — colle ta clé Gemini en haut de la page');
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      systemInstruction:{parts:[{text:systemPrompt}]},
+      contents:[{role:'user',parts:[{text:userMsg}]}],
+      generationConfig:{maxOutputTokens:maxTokens,temperature:0.3},
+      tools:[{googleSearch:{}}]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message||'Gemini API error');
+  const txt = data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+  if (!txt) throw new Error('Réponse vide de Gemini');
+  return txt;
+}
+
+// ═══════════════════════════════════════
+// FJ HEADLINES
+// ═══════════════════════════════════════
+async function loadFJ() {
+  document.getElementById('fjIcon').textContent = '⟳';
+  document.getElementById('fjContent').textContent = 'Scan FinancialJuice en cours...';
+  try {
+    const sys = `Tu surveilles FinancialJuice pour les traders d or XAU/USD.
+Cherche sur le web les headlines recentes de financialjuice.com des 2 dernieres heures impactant l or.
+JSON uniquement (zero apostrophe):
+{"h":[{"t":"headline courte","heure":"HH:MM","niv":"CRITIQUE|ELEVE|MODERE","imp":"haussier|baissier|neutre"}],"resume":"synthese 1 phrase"}`;
+    const txt = await callGemini(sys, `Headlines FinancialJuice impactant or maintenant. ${new Date().toLocaleTimeString('fr-FR')}`, 400);
+    fjData = parseResp(txt);
+    renderFJ();
+    document.getElementById('fjTime').textContent = '· '+new Date().toLocaleTimeString('fr-FR');
+  } catch(e) {
+    document.getElementById('fjContent').innerHTML = `<span style="color:#ff6644">⚠ ${e.message}</span>`;
+  }
+  document.getElementById('fjIcon').textContent = '🔴';
+}
+
+function renderFJ() {
+  if (!fjData || !fjData.h) return;
+  const AC={CRITIQUE:{c:"#ff2244",bg:"rgba(255,34,68,0.1)",icon:"🚨"},ELEVE:{c:"#ff8822",bg:"rgba(255,136,34,0.08)",icon:"⚠️"},MODERE:{c:"#ffcc44",bg:"rgba(255,204,68,0.06)",icon:"ℹ️"}};
+  const IMP={haussier:{c:"#00ff88",t:"▲"},baissier:{c:"#ff4466",t:"▼"},neutre:{c:"#ffcc44",t:"●"}};
+  let html = '';
+  if (fjData.resume) html += `<div style="font-size:11px;color:#6a8890;font-style:italic;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:8px">${fjData.resume}</div>`;
+  html += `<div style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto">`;
+  (fjData.h||[]).forEach(h => {
+    const a=AC[h.niv]||AC.MODERE;
+    const imp=IMP[h.imp]||IMP.n
