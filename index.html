@@ -185,7 +185,7 @@ let currentTab = 'signal';
 // ═══════════════════════════════════════
 function saveKey() {
   const val = document.getElementById('apiKeyInput').value.trim();
-  if (!val.startsWith('AIza')) { document.getElementById('keyStatus').textContent = '❌ Clé invalide — doit commencer par AIza...'; return; }
+  if (!val || val.length < 10) { document.getElementById('keyStatus').textContent = '❌ Clé trop courte'; return; }
   apiKey = val;
   localStorage.setItem('gemini_key', val);
   document.getElementById('keyStatus').innerHTML = '✅ Clé sauvegardée !';
@@ -193,10 +193,11 @@ function saveKey() {
 }
 
 function initKey() {
-  if (apiKey) {
-    document.getElementById('apiKeyInput').value = apiKey;
+  const stored = localStorage.getItem('gemini_key');
+  if (stored && stored.length > 10) {
+    apiKey = stored;
+    document.getElementById('apiKeyInput').value = stored;
     document.getElementById('key-section').style.display = 'none';
-    document.getElementById('keyStatus').textContent = '✅ Clé chargée';
   }
 }
 
@@ -352,4 +353,327 @@ function renderFJ() {
   html += `<div style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto">`;
   (fjData.h||[]).forEach(h => {
     const a=AC[h.niv]||AC.MODERE;
-    const imp=IMP[h.imp]||IMP.n
+    const imp=IMP[h.imp]||IMP.neutre;
+    html+=`<div class="niv-card" style="background:${a.bg};border-color:${a.c}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
+            <span style="font-size:9px">${a.icon}</span>
+            <span style="font-size:9px;color:${a.c};font-weight:700">${h.niv}</span>
+            ${h.heure?`<span style="font-size:9px;color:#2a4050">${h.heure}</span>`:''}
+          </div>
+          <div style="font-size:11px;color:#8aaccc;line-height:1.5">${h.t}</div>
+        </div>
+        <span style="font-size:14px;color:${imp.c};font-weight:700">${imp.t}</span>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('fjContent').innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+// MAIN ANALYSIS
+// ═══════════════════════════════════════
+function showLoader(show) {
+  document.getElementById('loader').style.display = show?'block':'none';
+  document.getElementById('result').style.display = show?'none': (currentResult?'block':'none');
+  document.getElementById('scanBtn').textContent = show?'⟳  ANALYSE...':'⚡ ANALYSER MAINTENANT';
+  document.getElementById('scanBtn').disabled = show;
+}
+
+function updateStep(idx) {
+  document.getElementById('steps').innerHTML = STEPS_LIST.map((s,i)=>`
+    <div style="font-size:10px;padding:3px 0;display:flex;align-items:center;gap:8px;color:${i<idx?'rgba(0,255,136,.4)':i===idx?'#00ff88':'#1a2e40'}">
+      <span>${i<idx?'✓':i===idx?'▶':'○'}</span>${s}
+    </div>`).join('');
+}
+
+async function runAnalysis() {
+  if (!apiKey) { document.getElementById('key-section').style.display='block'; document.getElementById('apiKeyInput').focus(); return; }
+  const sid = getSessionId();
+  showLoader(true);
+  document.getElementById('errBox').style.display='none';
+  let stepIdx=0;
+  const stepTimer = setInterval(()=>{stepIdx=Math.min(stepIdx+1,STEPS_LIST.length-1);updateStep(stepIdx);},1200);
+
+  try {
+    let raw;
+    if (mockMode) {
+      await new Promise(r=>setTimeout(r,1200));
+      raw={sig:"SELL",conf:72,reg:"DOLLAR_REFUGE",reg_note:"VIX 31 + guerre Iran active",vix:"31.2",vix_dir:"monte",us30:"45800",us30_var:"-1.7%",dxy:"99.8",y10:"4.41%",xau:"4380",xau_var:"-2.3%",trump:"Pas de deal Iran",fed:"Fed hawkish 1 coupe 2026",geo:"Guerre Iran semaine 4 Hormuz bloque",h1:"SELL",h4:"SELL",h1_note:"Sous MM50 momentum baissier",h4_note:"4 semaines rouges structure baissiere",entree:"4400-4420",sl:"4480",tp:"4200",resume:"DOLLAR REFUGE VIX monte or sous pression SELL rebonds",alerte:"Trump deadline 6 avril risque spike"};
+    } else {
+      const txt = await callGemini(buildPrompt(sid), `Analyse XAU/USD maintenant. ${new Date().toLocaleString('fr-FR')}`, 600);
+      raw = parseResp(txt);
+    }
+
+    const parsed = normalize(raw);
+    currentResult = parsed;
+    const entry = {...parsed,_heure:new Date().toLocaleTimeString('fr-FR'),_session:sid};
+    history = [...history.slice(-9), entry];
+    renderResult(parsed);
+    document.getElementById('lastUpd').textContent = `Dernière analyse: ${entry._heure} · ${history.length} signal${history.length>1?'s':''}`;
+
+  } catch(e) {
+    document.getElementById('errBox').style.display='block';
+    document.getElementById('errBox').textContent = '⚠ '+e.message;
+  } finally {
+    clearInterval(stepTimer);
+    showLoader(false);
+  }
+}
+
+// ═══════════════════════════════════════
+// NORMALIZE
+// ═══════════════════════════════════════
+function normalize(raw) {
+  const vixVal=parseFloat(raw.vix||0);
+  const vixMonte=raw.vix_dir==='monte';
+  let regType=raw.reg||'DOLLAR_REFUGE';
+  const vixOverride=(vixVal>25||vixMonte)&&regType==='OR_REFUGE';
+  if(vixOverride) regType='DOLLAR_REFUGE';
+  return {
+    signal_final:raw.sig||'WAIT',confidence:raw.conf||55,timeframe:'Court terme',resume:raw.resume||'',
+    _vix_override:vixOverride,
+    regime_refuge:{type:regType,explication:raw.reg_note||''},
+    marches:[
+      {a:'XAU/USD',p:raw.xau||'?',v:raw.xau_var||'?',sig:'neutre',c:''},
+      {a:'US30',p:raw.us30||'?',v:raw.us30_var||'?',sig:(raw.us30_var||'').includes('-')?'baissier':'haussier',
+        c:regType==='DOLLAR_REFUGE'?((raw.us30_var||'').includes('-')?'Appels marge → or baisse':'Fin appels marge → or rebondit'):'Correlation normale'},
+      {a:'DXY',p:raw.dxy||'?',v:'?',sig:'neutre',c:''},
+      {a:'US10Y',p:raw.y10||'?',v:'?',sig:'neutre',c:''},
+      {a:'VIX',p:raw.vix||'?',v:'?',
+        niveau:vixVal>30?'panique>30':vixVal>25?'élevé 25-30':vixVal>20?'modéré 20-25':'bas<20',
+        sig:vixMonte?'baissier':'haussier',
+        c:vixMonte?'VIX monte → dollar refuge → or baisse':'VIX stable/baisse → pression allégée'},
+    ].filter(m=>m.p!=='?'),
+    news:[
+      raw.trump?{src:'Trump',txt:raw.trump,imp:'neutre'}:null,
+      raw.fed?{src:'Fed',txt:raw.fed,imp:'neutre'}:null,
+      raw.geo?{src:'Géo/Iran',txt:raw.geo,imp:'neutre'}:null,
+    ].filter(Boolean),
+    mf:{H1:{sig:raw.h1||'WAIT',r:raw.h1_note||''},H4:{sig:raw.h4||'WAIT',r:raw.h4_note||''},conf:raw.h1===raw.h4?'alignés':'divergents'},
+    alertes:raw.alerte?[{niv:'ÉLEVÉ',msg:raw.alerte,imp:'neutre',action:'Surveiller'}]:[],
+    niveaux:{entree:raw.entree||'?',sl:raw.sl||'?',tp:raw.tp||'?'},
+    dims:{
+      regime_et_refuge:{score:regType==='DOLLAR_REFUGE'?-2:2,c:raw.reg_note||''},
+      appels_de_marge:{score:vixMonte?-2:1,actifs:vixMonte?'présents':'en_reduction',c:'VIX '+(raw.vix||'?')},
+      dollar_taux:{score:0,c:'DXY '+(raw.dxy||'?')+' / US10Y '+(raw.y10||'?')},
+      macro_news:{score:0,c:raw.fed||''},
+    },
+  };
+}
+
+// ═══════════════════════════════════════
+// RENDER RESULT
+// ═══════════════════════════════════════
+function badge(impact){
+  const m={haussier:'badge-h',baissier:'badge-b',neutre:'badge-n',haussier2:'▲',baissier2:'▼',neutre2:'●'};
+  return `<span class="${m[impact]||'badge-n'}">${impact==='haussier'?'▲':impact==='baissier'?'▼':'●'}</span>`;
+}
+
+function sbar(score){
+  const pct=((score+5)/10)*100;
+  const c=score>1?'#00ff88':score<-1?'#ff4466':'#ffcc44';
+  return `<div class="sbar-wrap"><div class="sbar-bg"><div style="width:${pct}%;height:100%;background:${c};transition:width 1s ease"></div></div><span style="color:${c};font-size:11px;font-family:monospace;min-width:22px;text-align:right">${score>0?'+':''}${score}</span></div>`;
+}
+
+function renderResult(p) {
+  const sc=SC[p.signal_final]||'#ffcc44';
+  const rc=RC[p.regime_refuge.type]||RC.DOLLAR_REFUGE;
+
+  // VIX Override
+  document.getElementById('vixOverride').style.display = p._vix_override?'block':'none';
+
+  // Alertes
+  const AC={CRITIQUE:{c:"#ff2244",bg:"rgba(255,34,68,0.12)",border:"#ff224433",icon:"🚨"},ÉLEVÉ:{c:"#ff8822",bg:"rgba(255,136,34,0.1)",border:"#ff882233",icon:"⚠️"},ELEVE:{c:"#ff8822",bg:"rgba(255,136,34,0.1)",border:"#ff882233",icon:"⚠️"},MODÉRÉ:{c:"#ffcc44",bg:"rgba(255,204,68,0.08)",border:"#ffcc4422",icon:"ℹ️"}};
+  document.getElementById('alertsBox').innerHTML = p.alertes.map(a=>{
+    const cfg=AC[a.niv]||AC.MODÉRÉ;
+    return `<div class="alert-card" style="background:${cfg.bg};border:1px solid ${cfg.border}">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:9px;color:${cfg.c};font-weight:700;letter-spacing:1px">${cfg.icon} ${a.niv}</span>${badge(a.imp)}</div>
+      <div style="font-size:11px;color:${cfg.c}bb;line-height:1.5;margin-bottom:4px">${a.msg}</div>
+      <div style="font-size:9px;color:${cfg.c}66;font-style:italic">→ ${a.action}</div>
+    </div>`;
+  }).join('');
+
+  // Régime
+  document.getElementById('regimeBox').innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;background:${rc.bg};border-radius:8px;padding:12px">
+      <span style="font-size:26px">${rc.icon}</span>
+      <div><div style="font-size:9px;color:${rc.color};letter-spacing:3px;font-weight:700;margin-bottom:4px">RÉGIME · ${rc.label}</div>
+      <div style="font-size:12px;color:${rc.color}bb;line-height:1.6">${p.regime_refuge.explication}</div></div>
+    </div>`;
+
+  // Multi-timeframe
+  const cc=p.mf.conf==='alignés'?'#00ff88':'#ffcc44';
+  document.getElementById('mfBox').innerHTML = `
+    <div class="label">▸ MULTI-TIMEFRAME H1/H4</div>
+    <div class="mf-grid">
+      ${['H1','H4'].map(tf=>{
+        const d=p.mf[tf]; const sc2=SC[d.sig]||'#ffcc44';
+        return `<div class="mf-card" style="background:${sc2}0a;border:1px solid ${sc2}33">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;color:${sc2};font-weight:700">${tf}</span></div>
+          <div style="font-size:20px;font-weight:700;color:${sc2};font-family:'Syne',sans-serif;line-height:1;margin-bottom:4px">${SI[d.sig]||'●'} ${d.sig}</div>
+          <div style="font-size:9px;color:${sc2}88;line-height:1.5">${d.r}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="text-align:center;font-size:10px;color:${cc};font-weight:700;letter-spacing:1px">${p.mf.conf==='alignés'?'✓ SIGNAUX ALIGNÉS':'⚡ SIGNAUX DIVERGENTS'}</div>`;
+
+  // Signal principal
+  const conf=p.confidence;
+  const circ=`<svg width="74" height="74" viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="31" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="6"/>
+    <circle cx="37" cy="37" r="31" fill="none" stroke="${sc}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${(conf/100)*194.8} 194.8" stroke-dashoffset="48.7"
+      style="filter:drop-shadow(0 0 8px ${sc})"/>
+    <text x="37" y="43" text-anchor="middle" fill="${sc}" font-size="16" font-weight="700" font-family="monospace">${conf}%</text>
+  </svg>`;
+  document.getElementById('signalBox').style.border = `1px solid ${sc}44`;
+  document.getElementById('signalBox').style.boxShadow = `0 0 50px ${sc}12`;
+  document.getElementById('signalBox').innerHTML = `
+    <div style="position:absolute;top:0;left:5%;right:5%;height:1px;background:linear-gradient(90deg,transparent,${sc}88,transparent)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+      <div>
+        <div style="font-size:9px;color:#2a4060;letter-spacing:3px;margin-bottom:6px">SIGNAL FINAL · XAU/USD</div>
+        <div style="font-size:54px;font-weight:800;color:${sc};line-height:1;font-family:'Syne',sans-serif;text-shadow:0 0 40px ${sc}55">${SI[p.signal_final]} ${p.signal_final}</div>
+        <div style="color:#6a8aaa;font-size:12px;margin-top:8px;max-width:420px;line-height:1.6">${p.resume}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:9px;color:#2a4060;letter-spacing:2px;margin-bottom:6px">CONFIANCE</div>
+        ${circ}
+      </div>
+    </div>`;
+
+  // Marchés
+  const ACOL={"XAU/USD":"#d4a853","US30":"#ff6644","DXY":"#4488ff","US10Y":"#44aaff","VIX":"#ff44aa"};
+  const AICO={"XAU/USD":"🥇","US30":"📈","DXY":"💵","US10Y":"📜","VIX":"😱"};
+  document.getElementById('marketsBox').innerHTML = `
+    <div class="label">▸ MARCHÉS CORRÉLÉS</div>
+    <div class="market-grid">
+      ${p.marches.map(m=>{
+        const color=ACOL[m.a]||'#8aaccc'; const icon=AICO[m.a]||'📈';
+        const sigC=m.sig==='haussier'?'#00ff88':m.sig==='baissier'?'#ff4466':'#ffcc44';
+        return `<div class="market-card" style="border:1px solid ${color}22">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <div style="display:flex;align-items:center;gap:5px"><span style="font-size:13px">${icon}</span><span style="font-size:9px;color:${color};letter-spacing:1px;font-weight:700">${m.a}</span></div>
+            <span style="font-size:11px;color:${sigC};font-weight:700">${m.v}</span>
+          </div>
+          <div style="font-size:13px;color:#8aaccc;font-weight:600;margin-bottom:4px">${m.p}</div>
+          ${badge(m.sig)}
+          ${m.niveau?`<div style="font-size:8px;color:#2a4050;margin-top:3px">${m.niveau}</div>`:''}
+          <div style="font-size:9px;color:#3a5060;line-height:1.5;margin-top:4px">${m.c}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // News
+  document.getElementById('newsBox').innerHTML = `
+    <div class="label">▸ NEWS</div>
+    ${p.news.map(n=>`<div class="news-item">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:9px;color:#d4a853;font-weight:700">${n.src.toUpperCase()}</span>${badge(n.imp)}</div>
+      <div style="font-size:10px;color:#4a6878;line-height:1.5">${n.txt}</div>
+    </div>`).join('')}`;
+
+  // Dimensions
+  const dimLbl={regime_et_refuge:'🛡️ Régime & Refuge',appels_de_marge:'💥 Appels de marge',dollar_taux:'💵 Dollar & Taux',macro_news:'🏦 Macro & News'};
+  document.getElementById('dimsBox').innerHTML = `
+    <div class="label">▸ DIMENSIONS</div>
+    ${Object.entries(p.dims).map(([k,v])=>`
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:10px;color:#5a7888">${dimLbl[k]||k}</span>
+          ${v.actifs?`<span style="font-size:8px;color:${v.actifs==='présents'?'#ff4466':v.actifs==='en_reduction'?'#ffcc44':'#00ff88'}">${v.actifs.toUpperCase()}</span>`:''}
+        </div>
+        ${sbar(v.score)}
+        <div style="font-size:9px;color:#3a5060;margin-top:3px;line-height:1.5">${v.c}</div>
+      </div>`).join('')}`;
+
+  // Niveaux
+  const nc=[['ENTRÉE',p.niveaux.entree,'#d4a853'],['STOP LOSS',p.niveaux.sl,'#ff4466'],['TAKE PROFIT',p.niveaux.tp,'#00ff88']];
+  document.getElementById('levelsBox').innerHTML = `
+    <div class="label">▸ NIVEAUX DE TRADING</div>
+    ${nc.map(([l,v,c])=>`<div class="level-row"><span style="font-size:9px;color:#2a4060;letter-spacing:1px">${l}</span><span style="font-size:14px;color:${c};font-weight:700">${v||'—'}</span></div>`).join('')}`;
+
+  // History
+  renderHistory();
+
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').className = 'fade';
+}
+
+function renderHistory() {
+  document.getElementById('histList').innerHTML = history.slice().reverse().map((h,i)=>{
+    const sc2=SC[h.signal_final]||'#888';
+    return `<div class="hist-item" style="background:${sc2}11;border:1px solid ${sc2}33;opacity:${1-i*.1}">
+      <div style="font-size:9px;color:#3a5060;margin-bottom:3px">${h._heure}</div>
+      <div style="font-size:18px;font-weight:700;color:${sc2};font-family:'Syne',sans-serif;line-height:1">${SI[h.signal_final]} ${h.signal_final}</div>
+      <div style="font-size:10px;color:${sc2}99;margin-top:2px">${h.confidence}%</div>
+      <div style="font-size:9px;color:#2a4050;margin-top:2px">${h.regime_refuge?.type==='DOLLAR_REFUGE'?'💵':'🥇'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(b=>{ b.classList.remove('active'); b.style.removeProperty('background'); b.style.removeProperty('border-color'); b.style.color='#2a4060'; });
+  const sc2 = currentResult ? (SC[currentResult.signal_final]||'#ffcc44') : '#ffcc44';
+  btn.classList.add('active');
+  btn.style.background = sc2+'18';
+  btn.style.borderColor = sc2+'44';
+  btn.style.color = sc2;
+  document.getElementById('tab-signal').style.display = tab==='signal'?'block':'none';
+  document.getElementById('tab-history').style.display = tab==='history'?'block':'none';
+  if (tab==='history') renderHistory();
+}
+
+// ═══════════════════════════════════════
+// AUTO MODE
+// ═══════════════════════════════════════
+function toggleAuto() {
+  autoMode = !autoMode;
+  const btn = document.getElementById('autoBtn');
+  const sid = getSessionId();
+  const s = SESSIONS[sid];
+  if (autoMode) {
+    btn.style.background = s.color+'14';
+    btn.style.borderColor = s.color+'44';
+    btn.style.color = s.color;
+    btn.textContent = `● AUTO ${s.refresh}M`;
+    runAnalysis();
+    autoTimer = setInterval(runAnalysis, s.refresh*60*1000);
+  } else {
+    clearInterval(autoTimer);
+    btn.style.background = 'rgba(255,255,255,.02)';
+    btn.style.borderColor = 'rgba(255,255,255,.06)';
+    btn.style.color = '#2a4060';
+    btn.textContent = '○ AUTO';
+  }
+}
+
+function toggleMock() {
+  mockMode = !mockMode;
+  const btn = document.getElementById('mockBtn');
+  btn.style.background = mockMode?'rgba(255,204,68,.1)':'rgba(255,255,255,.02)';
+  btn.style.borderColor = mockMode?'#ffcc4444':'rgba(255,255,255,.06)';
+  btn.style.color = mockMode?'#ffcc44':'#2a4060';
+  btn.textContent = mockMode?'● MOCK':'○ MOCK';
+}
+
+// ═══════════════════════════════════════
+// CLOCK UPDATE
+// ═══════════════════════════════════════
+setInterval(renderSessions, 1000);
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+initKey();
+renderSessions();
+setTimeout(loadFJ, 1500);
+</script>
+</body>
+</html>
