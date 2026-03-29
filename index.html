@@ -64,7 +64,7 @@
     <div style="font-size:10px;color:#d4a853;font-weight:700;letter-spacing:2px;margin-bottom:6px">🔑 CLÉ API GEMINI</div>
     <div style="font-size:11px;color:#7a6030;margin-bottom:8px">Colle ta clé API Gemini (commence par AIza...) — elle sera sauvegardée dans ton navigateur</div>
     <div class="key-input-wrap">
-      <input type="password" id="apiKeyInput" placeholder="AIza..." />
+      <input type="text" id="apiKeyInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="AIza..." />
       <button onclick="saveKey()" style="padding:8px 14px;background:rgba(212,168,83,.2);border:1px solid #d4a85344;border-radius:8px;color:#d4a853;font-size:11px;font-weight:700;white-space:nowrap">💾 Sauver</button>
     </div>
     <div id="keyStatus" style="font-size:10px;margin-top:6px;color:#4a6030"></div>
@@ -184,13 +184,12 @@ let currentTab = 'signal';
 // KEY MANAGEMENT
 // ═══════════════════════════════════════
 function saveKey() {
-  var input = document.getElementById('apiKeyInput');
-  var val = input.value.trim();
-  if (!val) { alert('Colle ta cle Gemini dans le champ'); return; }
+  var val = (document.getElementById('apiKeyInput').value || '').trim();
+  if (val.length < 5) { document.getElementById('key-section').style.background='rgba(255,0,0,0.2)'; setTimeout(()=>{document.getElementById('key-section').style.background='rgba(212,168,83,0.08)';},500); return; }
   apiKey = val;
   try { localStorage.setItem('gemini_key', val); } catch(e) {}
   document.getElementById('key-section').style.display = 'none';
-  document.getElementById('lastUpd').textContent = 'Cle sauvegardee - pret a analyser';
+  document.getElementById('lastUpd').textContent = '✅ Cle sauvegardee';
 }
 
 function initKey() {
@@ -313,13 +312,14 @@ function parseResp(txt) {
 // ═══════════════════════════════════════
 async function callGemini(systemPrompt, userMsg, maxTokens=600) {
   if (!apiKey) throw new Error('Clé API manquante — colle ta clé Gemini en haut de la page');
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       systemInstruction:{parts:[{text:systemPrompt}]},
       contents:[{role:'user',parts:[{text:userMsg}]}],
-      generationConfig:{maxOutputTokens:maxTokens,temperature:0.3}
+      generationConfig:{maxOutputTokens:maxTokens,temperature:0.3},
+      tools:[{google_search:{}}]
     })
   });
   const data = await res.json();
@@ -354,6 +354,4 @@ function renderFJ() {
   if (!fjData || !fjData.h) return;
   const AC={CRITIQUE:{c:"#ff2244",bg:"rgba(255,34,68,0.1)",icon:"🚨"},ELEVE:{c:"#ff8822",bg:"rgba(255,136,34,0.08)",icon:"⚠️"},MODERE:{c:"#ffcc44",bg:"rgba(255,204,68,0.06)",icon:"ℹ️"}};
   const IMP={haussier:{c:"#00ff88",t:"▲"},baissier:{c:"#ff4466",t:"▼"},neutre:{c:"#ffcc44",t:"●"}};
-  let html = '';
-  if (fjData.resume) html += `<div style="font-size:11px;color:#6a8890;font-style:italic;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:8px">${fjData.resume}</div>`;
-  html += `<div st
+  let ht
