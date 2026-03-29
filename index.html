@@ -3,364 +3,348 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gold Scanner v5 — XAU/USD</title>
+<title>Gold Scanner — XAU/USD</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Syne:wght@800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#050810;color:#b8ccd8;font-family:'IBM Plex Mono',monospace;min-height:100vh}
-.wrap{max-width:840px;margin:0 auto;padding:16px 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-button{cursor:pointer;font-family:'IBM Plex Mono',monospace}
-::-webkit-scrollbar{width:3px}
-::-webkit-scrollbar-thumb{background:#1e3050}
+body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px;min-height:100vh}
+button{cursor:pointer;font-family:monospace;border:none;outline:none}
+input{font-family:monospace}
+h1{font-size:20px;color:#d4a853;margin-bottom:4px}
+.card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:12px}
+.green{color:#00ff88} .red{color:#ff4466} .yellow{color:#ffcc44} .gold{color:#d4a853}
+.big{font-size:48px;font-weight:bold;line-height:1}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<!-- Header -->
-<div style="margin-bottom:14px">
-  <div style="font-size:9px;color:#1a4530;letter-spacing:4px;margin-bottom:3px">◈ GOLD SCANNER v5 · GEMINI · VIX OVERRIDE</div>
-  <h1 style="font-size:22px;font-family:'Syne',sans-serif;font-weight:800;background:linear-gradient(120deg,#c8922a,#f0c060,#9a6820);-webkit-background-clip:text;-webkit-text-fill-color:transparent">GOLD SESSION SCANNER</h1>
-  <p style="font-size:9px;color:#2a4560;letter-spacing:1.5px;margin-top:4px">GEMINI FLASH · RÉGIME REFUGE · VIX OVERRIDE · FINANCIALJUICE</p>
-</div>
+<div style="font-size:9px;color:#1a4530;letter-spacing:3px;margin-bottom:4px">◈ GOLD SCANNER v5 · GEMINI</div>
+<h1>GOLD SESSION SCANNER</h1>
+<p style="font-size:9px;color:#3a5570;letter-spacing:2px;margin-bottom:14px">GEMINI FLASH · RÉGIME REFUGE · VIX OVERRIDE</p>
 
-<!-- API Key -->
-<div id="keysec" style="background:rgba(212,168,83,.08);border:1px solid #d4a85333;border-radius:12px;padding:16px;margin-bottom:16px">
-  <div style="font-size:10px;color:#d4a853;font-weight:700;letter-spacing:2px;margin-bottom:6px">🔑 CLÉ API GEMINI</div>
-  <div style="font-size:11px;color:#7a6030;margin-bottom:8px">Colle ta clé Gemini (AIza...) — sauvegardée dans ton navigateur</div>
+<!-- KEY -->
+<div id="keysec" class="card" style="border-color:#d4a85333;background:rgba(212,168,83,.06)">
+  <div class="gold" style="font-size:10px;font-weight:bold;letter-spacing:2px;margin-bottom:6px">🔑 CLÉ API GEMINI</div>
+  <div style="font-size:11px;color:#7a6030;margin-bottom:8px">Colle ta clé Gemini — sauvegardée dans ton navigateur</div>
   <div style="display:flex;gap:8px">
-    <input id="keyinput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-      placeholder="AIzaSy..."
-      style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#f0d080;padding:10px 12px;border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace">
-    <button onclick="saveKey()"
-      style="padding:10px 16px;background:rgba(212,168,83,.2);border:1px solid #d4a85344;border-radius:8px;color:#d4a853;font-size:12px;font-weight:700">
+    <input id="ki" type="text" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(212,168,83,.3);color:#f0d080;padding:10px;border-radius:8px;font-size:13px">
+    <button id="savebtn"
+      style="padding:10px 16px;background:rgba(212,168,83,.2);border:1px solid rgba(212,168,83,.3);border-radius:8px;color:#d4a853;font-size:12px;font-weight:bold">
       💾 Sauver
     </button>
   </div>
-  <div id="keystatus" style="font-size:10px;margin-top:6px;color:#5a8050"></div>
+  <div id="ks" style="font-size:10px;margin-top:6px;color:#5a8050"></div>
 </div>
 
-<!-- Sessions -->
-<div id="sessions" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px"></div>
+<!-- SESSION -->
+<div class="card" id="sesscard">
+  <div id="sessinfo" style="font-size:11px;color:#3a5570">Chargement...</div>
+  <div id="clock" style="font-size:18px;color:#00ff88;font-weight:bold;margin-top:4px"></div>
+</div>
 
-<!-- FJ Panel -->
-<div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,180,0,.2);border-radius:12px;padding:14px;margin-bottom:12px">
+<!-- FJ -->
+<div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span id="fjicon">🔴</span>
-      <span style="font-size:10px;color:#d4a853;font-weight:700;letter-spacing:2px">FINANCIALJUICE</span>
-      <span id="fjtime" style="font-size:9px;color:#2a4050"></span>
-    </div>
+    <span class="gold" style="font-size:10px;font-weight:bold;letter-spacing:2px">🔴 FINANCIALJUICE</span>
     <div style="display:flex;gap:6px">
-      <button onclick="loadFJ()" style="font-size:9px;padding:3px 8px;background:rgba(255,170,0,.1);border:1px solid #ffaa0033;border-radius:4px;color:#ffaa00;font-weight:700">↻ MAJ</button>
-      <button onclick="runAnalysis()" style="font-size:9px;padding:3px 8px;background:rgba(0,255,136,.1);border:1px solid #00ff8833;border-radius:4px;color:#00ff88;font-weight:700">⚡ ANALYSER</button>
+      <button id="fjbtn" style="font-size:9px;padding:3px 8px;background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.2);border-radius:4px;color:#ffaa00;font-weight:bold">↻ MAJ</button>
+      <button id="fjabtn" style="font-size:9px;padding:3px 8px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);border-radius:4px;color:#00ff88;font-weight:bold">⚡ ANALYSER</button>
     </div>
   </div>
-  <div id="fjcontent" style="font-size:10px;color:#3a5570">Clique ↻ MAJ pour charger les headlines...</div>
+  <div id="fjcont" style="font-size:10px;color:#3a5570">Clique ↻ MAJ pour charger...</div>
 </div>
 
-<!-- Session tips -->
-<div id="tips" style="background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25);border-radius:10px;padding:10px 14px;margin-bottom:12px"></div>
-
-<!-- Controls -->
+<!-- CONTROLS -->
 <div style="display:flex;gap:8px;margin-bottom:12px">
-  <button id="scanbtn" onclick="runAnalysis()"
-    style="flex:1;padding:12px;background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,255,136,.05));border:1px solid rgba(0,255,136,.4);border-radius:10px;color:#00ff88;font-size:12px;letter-spacing:2px;font-weight:700">
+  <button id="scanbtn" style="flex:1;padding:14px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);border-radius:10px;color:#00ff88;font-size:13px;font-weight:bold;letter-spacing:1px">
     ⚡ ANALYSER MAINTENANT
   </button>
-  <button id="autobitn" onclick="toggleAuto()"
-    style="padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;color:#2a4060;font-size:10px;font-weight:600">
-    ○ AUTO
-  </button>
-  <button id="mockbtn" onclick="toggleMock()"
-    style="padding:12px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;color:#2a4060;font-size:9px;font-weight:700">
+  <button id="mockbtn" style="padding:14px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#3a5070;font-size:9px;font-weight:bold">
     ○ MOCK
   </button>
 </div>
 
-<div id="lastupd" style="font-size:9px;color:#1e3040;text-align:right;margin-bottom:10px;letter-spacing:2px"></div>
+<div id="lu" style="font-size:9px;color:#1e3040;text-align:right;margin-bottom:10px"></div>
 
-<!-- Loader -->
-<div id="loader" style="display:none;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:20px;margin-bottom:12px;text-align:center">
-  <div style="display:inline-block;width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.05);border-top:2px solid #00ff88;animation:spin 1s linear infinite;margin-bottom:10px"></div>
-  <div style="font-size:11px;color:#3a5570;letter-spacing:2px">SCAN EN COURS...</div>
-  <div id="steplist" style="margin-top:12px;text-align:left"></div>
+<!-- LOADER -->
+<div id="loader" class="card" style="display:none;text-align:center;padding:20px">
+  <div style="font-size:11px;color:#3a5570;letter-spacing:2px;margin-bottom:12px">SCAN EN COURS...</div>
+  <div id="steps"></div>
 </div>
 
-<!-- Error -->
-<div id="errbox" style="display:none;background:rgba(255,50,50,.06);border:1px solid #ff446622;border-radius:10px;padding:12px;color:#ff6680;font-size:11px;margin-bottom:12px"></div>
+<!-- ERROR -->
+<div id="err" style="display:none;background:rgba(255,50,50,.06);border:1px solid rgba(255,68,68,.2);border-radius:10px;padding:12px;color:#ff6680;font-size:11px;margin-bottom:12px"></div>
 
-<!-- Result -->
-<div id="result" style="display:none;animation:fadeUp .5s ease"></div>
+<!-- RESULT -->
+<div id="res"></div>
 
-</div>
 <script>
-// ═══ STATE ═══
-var apiKey = '';
-var mockMode = false;
-var autoMode = false;
-var autoTimer = null;
-var fjData = null;
-var history = [];
-var stepTimer = null;
+var KEY = '';
+var MOCK = false;
+var FJD = null;
+var HIST = [];
+var AT = null;
+var ST = null;
+var STEP_IDX = 0;
 
 var STEPS = ['Identification session','Régime refuge A/B/C','Scan Trump / FJ','US30 + VIX + DXY','Prix or XAU/USD','Signal final H1/H4'];
 
-var SESSIONS = {
-  ASIE:     {id:'ASIE',    label:'SESSION ASIE',    h:'23h00→07h00',s:23,e:7, color:'#ff6644',bg:'rgba(255,100,68,0.12)',icon:'🌏',alerte:'CRITIQUE',refresh:2,tips:['Moves les plus VIOLENTS — liquidité faible','Réaction aux news week-end/nuit','Gaps et spikes extrêmes']},
-  EUROPE:   {id:'EUROPE',  label:'SESSION EUROPE',  h:'07h00→16h00',s:7, e:16,color:'#44aaff',bg:'rgba(68,170,255,0.1)', icon:'🌍',alerte:'ÉLEVÉ',   refresh:3,tips:['Confirmation move asiatique','Ouverture Londres 08h = volatile','Zone décision avant Wall Street']},
-  AMERIQUE: {id:'AMERIQUE',label:'SESSION AMÉRIQUE',h:'13h30→22h00',s:13,e:22,color:'#00ff88',bg:'rgba(0,255,136,0.08)', icon:'🌎',alerte:'ÉLEVÉ',   refresh:3,tips:['Ouverture Wall Street 15h30','Trump poste 13h-17h Paris','Données macro US = impact majeur']}
-};
+var MOCK_D = {sig:'SELL',conf:72,reg:'DOLLAR_REFUGE',reg_note:'VIX 31 + guerre Iran active',vix:'31.2',vix_dir:'monte',us30:'45800',us30_var:'-1.7%',dxy:'99.8',y10:'4.41%',xau:'4380',xau_var:'-2.3%',trump:'Pas de deal Iran ultimatum actif',fed:'Fed hawkish 1 coupe 2026',geo:'Guerre Iran semaine 4 Hormuz bloque',h1:'SELL',h4:'SELL',h1_note:'Sous MM50 momentum baissier',h4_note:'4 semaines rouges structure baissiere',entree:'4400-4420',sl:'4480',tp:'4200',resume:'DOLLAR REFUGE VIX monte or sous pression SELL sur rebonds',alerte:'Trump deadline 6 avril risque spike volatilite'};
 
-var SC = {BUY:'#00ff88',SELL:'#ff4466',WAIT:'#ffcc44'};
-var SI = {BUY:'▲',SELL:'▼',WAIT:'●'};
-var RC = {
-  DOLLAR_REFUGE:{color:'#4488ff',bg:'rgba(68,136,255,0.12)',icon:'💵',label:'DOLLAR = VALEUR REFUGE'},
-  OR_REFUGE:    {color:'#d4a853',bg:'rgba(212,168,83,0.1)', icon:'🥇',label:'OR = VALEUR REFUGE'},
-  RISK_ON:      {color:'#ff6644',bg:'rgba(255,100,68,0.1)', icon:'🔥',label:'RISK-ON'}
-};
-
-// ═══ KEY ═══
-function saveKey() {
-  var v = document.getElementById('keyinput').value.trim();
-  if (!v) { document.getElementById('keystatus').textContent = '❌ Champ vide'; return; }
-  apiKey = v;
-  localStorage.setItem('gk', v);
-  document.getElementById('keysec').style.display = 'none';
-  document.getElementById('lastupd').textContent = '✅ Clé sauvegardée';
-}
-
-function initKey() {
-  var k = localStorage.getItem('gk');
-  if (k && k.length > 10) {
-    apiKey = k;
-    document.getElementById('keysec').style.display = 'none';
-  }
-}
-
-// ═══ SESSION ═══
-function getSid() {
-  var h = parseInt(new Date().toLocaleString('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit'}));
-  if (h >= 23 || h < 7) return 'ASIE';
-  if (h >= 7 && h < 16) return 'EUROPE';
-  return 'AMERIQUE';
-}
-
-function renderSessions() {
-  var sid = getSid();
-  var now = new Date().toLocaleTimeString('fr-FR',{timeZone:'Europe/Paris'});
-  var html = '';
-  Object.values(SESSIONS).forEach(function(s) {
-    var act = s.id === sid;
-    html += '<div style="background:' + (act ? s.bg : 'rgba(255,255,255,.02)') + ';border:1px solid ' + (act ? s.color+'55' : 'rgba(255,255,255,.05)') + ';border-radius:10px;padding:10px 12px">';
-    html += '<div style="display:flex;justify-content:space-between"><span style="font-size:16px">' + s.icon + '</span>';
-    if (act) html += '<span style="font-size:8px;color:' + s.color + ';font-weight:700;animation:pulse 1.5s infinite">● LIVE</span>';
-    html += '</div>';
-    html += '<div style="font-size:9px;color:' + (act ? s.color : '#1e3040') + ';font-weight:700;letter-spacing:1px;margin-top:4px">' + s.id + '</div>';
-    html += '<div style="font-size:8px;color:' + (act ? s.color+'88' : '#1a2838') + '">' + s.h + '</div>';
-    if (act) html += '<div style="font-size:12px;color:' + s.color + ';font-family:monospace;margin-top:4px">' + now + '</div>';
-    html += '</div>';
-  });
-  document.getElementById('sessions').innerHTML = html;
-
-  var s = SESSIONS[sid];
-  document.getElementById('tips').style.background = s.bg;
-  document.getElementById('tips').style.borderColor = s.color + '44';
-  document.getElementById('tips').innerHTML = '<div style="font-size:9px;color:' + s.color + ';letter-spacing:2px;font-weight:700;margin-bottom:6px">' + s.icon + ' ' + s.label + ' · ' + s.h + ' · ⚡ ' + s.alerte + '</div>' +
-    '<div style="display:flex;flex-wrap:wrap;gap:5px">' + s.tips.map(function(t) {
-      return '<span style="font-size:9px;color:' + s.color + '88;background:' + s.color + '0d;border:1px solid ' + s.color + '22;border-radius:4px;padding:2px 7px">' + t + '</span>';
-    }).join('') + '</div>';
-
-  document.getElementById('scanbtn').style.color = s.color;
-  document.getElementById('scanbtn').style.borderColor = s.color + '44';
-  document.getElementById('scanbtn').textContent = s.icon + '  ANALYSER — SESSION ' + sid + (mockMode ? ' (MOCK)' : '');
-}
-
-// ═══ PROMPT ═══
-function buildPrompt(sid) {
-  var s = SESSIONS[sid];
-  var fjctx = '';
-  if (fjData && fjData.h) fjctx = 'Headlines recentes FJ: ' + fjData.h.slice(0,3).map(function(h){return h.t;}).join(' | ');
-  return 'Expert XAU/USD. Session: ' + sid + ' (' + s.h + ' Paris). ' + fjctx + '\n\n' +
-    'REGIME (priorite absolue):\n' +
-    '- VIX>25 OU guerre active OU or baissier 2+ semaines = DOLLAR_REFUGE\n' +
-    '- DOLLAR_REFUGE: VIX monte = dollar monte = OR BAISSE toujours\n' +
-    '- DOLLAR_REFUGE: US30 remonte apres crash = fin appels marge = OR rebondit\n' +
-    '- OR_REFUGE seulement si VIX<20 ET pas de guerre ET or haussier\n' +
-    '- RISK_ON si marches calmes VIX<18\n\n' +
-    'Cherche sur le web: XAU prix, US30 variation, DXY, VIX valeur et direction, US10Y, news Trump recent, Fed, Iran.\n\n' +
-    'Reponds UNIQUEMENT avec ce JSON sur une ligne (zero apostrophe, textes courts):\n' +
-    '{"sig":"BUY|SELL|WAIT","conf":75,"reg":"DOLLAR_REFUGE","reg_note":"raison","vix":"31","vix_dir":"monte","us30":"45800","us30_var":"-1.7%","dxy":"99.8","y10":"4.41%","xau":"4380","xau_var":"-2.1%","trump":"post ou rien","fed":"annonce","geo":"situation","h1":"SELL","h4":"SELL","h1_note":"raison H1","h4_note":"raison H4","entree":"4400-4420","sl":"4480","tp":"4200","resume":"signal 20 mots","alerte":"alerte principale"}';
-}
-
-// ═══ JSON UTILS ═══
-function cleanJson(str) {
-  var out = '', inStr = false, esc = false;
-  for (var i = 0; i < str.length; i++) {
-    var c = str[i];
-    if (esc) { out += c; esc = false; continue; }
-    if (c === '\\') { out += c; esc = true; continue; }
-    if (c === '"') { inStr = !inStr; out += c; continue; }
-    if (inStr) {
-      if (c === "'") { out += ' '; continue; }
-      if (c.charCodeAt(0) < 32) { out += ' '; continue; }
-    } else {
-      if (c === '\n' || c === '\r') { out += ' '; continue; }
-    }
-    out += c;
-  }
-  return out.replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
-}
-
-function parseResp(txt) {
-  var s = txt.indexOf('{'), e = txt.lastIndexOf('}');
-  if (s === -1) throw new Error('JSON introuvable');
-  var slice = txt.slice(s, e+1);
-  try { return JSON.parse(slice); } catch(e1) {
-    try { return JSON.parse(cleanJson(slice)); } catch(e2) {
-      return {
-        sig: (slice.match(/"sig"\s*:\s*"(BUY|SELL|WAIT)"/) || [])[1] || 'WAIT',
-        conf: 55, reg: 'DOLLAR_REFUGE', reg_note: 'Extrait auto',
-        vix:'?',vix_dir:'stable',us30:'?',us30_var:'?',dxy:'?',y10:'?',xau:'?',xau_var:'?',
-        trump:'',fed:'',geo:'',h1:'WAIT',h4:'WAIT',h1_note:'',h4_note:'',
-        entree:'Voir chart',sl:'SL strict',tp:'TP chart',
-        resume:'JSON corrompu - signal extrait auto',alerte:'Verifier manuellement'
-      };
-    }
-  }
-}
-
-// ═══ GEMINI API ═══
-async function callGemini(system, user, maxTok) {
-  if (!apiKey) throw new Error('Clé API manquante');
-  var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      systemInstruction: {parts:[{text:system}]},
-      contents: [{role:'user',parts:[{text:user}]}],
-      generationConfig: {maxOutputTokens: maxTok || 600, temperature: 0.3},
-      tools: [{google_search:{}}]
-    })
-  });
-  var data = await res.json();
-  if (data.error) throw new Error(data.error.message || 'Gemini error');
-  var txt = '';
-  if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-    data.candidates[0].content.parts.forEach(function(p) { if (p.text) txt += p.text; });
-  }
-  if (!txt) throw new Error('Réponse vide');
-  return txt;
-}
-
-// ═══ FJ ═══
-async function loadFJ() {
-  document.getElementById('fjicon').textContent = '⟳';
-  document.getElementById('fjcontent').textContent = 'Scan FJ en cours...';
+// Init key
+(function(){
   try {
-    var sys = 'Cherche sur le web les headlines recentes de financialjuice.com impactant XAU/USD. JSON uniquement (zero apostrophe): {"h":[{"t":"headline","heure":"HH:MM","niv":"CRITIQUE|ELEVE|MODERE","imp":"haussier|baissier|neutre"}],"resume":"synthese"}';
-    var txt = await callGemini(sys, 'Headlines FinancialJuice or maintenant ' + new Date().toLocaleTimeString('fr-FR'), 400);
-    fjData = parseResp(txt);
-    renderFJ();
-    document.getElementById('fjtime').textContent = '· ' + new Date().toLocaleTimeString('fr-FR');
-  } catch(e) {
-    document.getElementById('fjcontent').innerHTML = '<span style="color:#ff6644">⚠ ' + e.message + '</span>';
+    var k = localStorage.getItem('gk');
+    if(k && k.length > 5){ KEY = k; document.getElementById('keysec').style.display='none'; }
+  } catch(e){}
+})();
+
+// Save key
+document.getElementById('savebtn').onclick = function(){
+  var v = document.getElementById('ki').value.trim();
+  if(!v){ document.getElementById('ks').textContent='❌ Champ vide'; return; }
+  KEY = v;
+  try{ localStorage.setItem('gk',v); }catch(e){}
+  document.getElementById('keysec').style.display = 'none';
+  document.getElementById('lu').textContent = '✅ Clé Gemini sauvegardée';
+};
+
+// Clock
+function tick(){
+  try{
+    var t = new Date().toLocaleTimeString('fr-FR',{timeZone:'Europe/Paris'});
+    document.getElementById('clock').textContent = t;
+    var h = parseInt(new Date().toLocaleString('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit'}));
+    var sid, sc;
+    if(h>=23||h<7){sid='ASIE';sc='#ff6644';}
+    else if(h>=7&&h<16){sid='EUROPE';sc='#44aaff';}
+    else{sid='AMERIQUE';sc='#00ff88';}
+    document.getElementById('sesscard').style.borderColor = sc+'55';
+    document.getElementById('sessinfo').innerHTML = '<span style="color:'+sc+';font-weight:bold">● LIVE · SESSION '+sid+'</span>';
+    document.getElementById('clock').style.color = sc;
+    document.getElementById('scanbtn').style.color = sc;
+    document.getElementById('scanbtn').style.borderColor = sc+'44';
+  }catch(e){}
+}
+tick();
+setInterval(tick, 1000);
+
+// Mock toggle
+document.getElementById('mockbtn').onclick = function(){
+  MOCK = !MOCK;
+  this.textContent = MOCK ? '● MOCK ON' : '○ MOCK';
+  this.style.background = MOCK ? 'rgba(255,204,68,.1)' : 'rgba(255,255,255,.02)';
+  this.style.borderColor = MOCK ? 'rgba(255,204,68,.3)' : 'rgba(255,255,255,.08)';
+  this.style.color = MOCK ? '#ffcc44' : '#3a5070';
+};
+
+// Clean JSON
+function cj(s){
+  var o='',ins=false,esc=false;
+  for(var i=0;i<s.length;i++){
+    var c=s[i];
+    if(esc){o+=c;esc=false;continue;}
+    if(c==='\\'){o+=c;esc=true;continue;}
+    if(c==='"'){ins=!ins;o+=c;continue;}
+    if(ins){if(c==="'"){o+=' ';continue;}if(c.charCodeAt(0)<32){o+=' ';continue;}}
+    else{if(c==='\n'||c==='\r'){o+=' ';continue;}}
+    o+=c;
   }
-  document.getElementById('fjicon').textContent = '🔴';
+  return o.replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
 }
 
-function renderFJ() {
-  if (!fjData || !fjData.h) return;
-  var AC = {CRITIQUE:{c:'#ff2244',bg:'rgba(255,34,68,.1)',icon:'🚨'},ELEVE:{c:'#ff8822',bg:'rgba(255,136,34,.08)',icon:'⚠️'},MODERE:{c:'#ffcc44',bg:'rgba(255,204,68,.06)',icon:'ℹ️'}};
-  var IMP = {haussier:{c:'#00ff88',t:'▲'},baissier:{c:'#ff4466',t:'▼'},neutre:{c:'#ffcc44',t:'●'}};
-  var html = '';
-  if (fjData.resume) html += '<div style="font-size:11px;color:#6a8890;font-style:italic;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05)">' + fjData.resume + '</div>';
-  html += '<div style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto">';
-  (fjData.h || []).forEach(function(h) {
-    var a = AC[h.niv] || AC.MODERE;
-    var imp = IMP[h.imp] || IMP.neutre;
-    html += '<div style="background:' + a.bg + ';border-left:3px solid ' + a.c + ';border-radius:6px;padding:7px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
-    html += '<div style="flex:1"><div style="font-size:9px;color:' + a.c + ';font-weight:700;margin-bottom:3px">' + a.icon + ' ' + h.niv + (h.heure ? ' · ' + h.heure : '') + '</div>';
-    html += '<div style="font-size:11px;color:#8aaccc;line-height:1.5">' + h.t + '</div></div>';
-    html += '<span style="font-size:14px;color:' + imp.c + ';font-weight:700">' + imp.t + '</span></div>';
-  });
-  html += '</div>';
-  document.getElementById('fjcontent').innerHTML = html;
+function pr(txt){
+  var s=txt.indexOf('{'),e=txt.lastIndexOf('}');
+  if(s<0)throw new Error('JSON introuvable');
+  var sl=txt.slice(s,e+1);
+  try{return JSON.parse(sl);}catch(e1){
+    try{return JSON.parse(cj(sl));}catch(e2){
+      return {sig:(sl.match(/"sig"\s*:\s*"(BUY|SELL|WAIT)"/)|| [])[1]||'WAIT',conf:55,reg:'DOLLAR_REFUGE',reg_note:'Extrait auto',vix:'?',vix_dir:'stable',us30:'?',us30_var:'?',dxy:'?',y10:'?',xau:'?',xau_var:'?',trump:'',fed:'',geo:'',h1:'WAIT',h4:'WAIT',h1_note:'',h4_note:'',entree:'?',sl:'?',tp:'?',resume:'JSON corrompu signal extrait auto',alerte:'Verifier manuellement'};
+    }
+  }
 }
 
-// ═══ NORMALIZE ═══
-function normalize(raw) {
-  var vv = parseFloat(raw.vix || 0);
-  var vm = raw.vix_dir === 'monte';
-  var reg = raw.reg || 'DOLLAR_REFUGE';
-  var ovrd = (vv > 25 || vm) && reg === 'OR_REFUGE';
-  if (ovrd) reg = 'DOLLAR_REFUGE';
-  return {
-    sig: raw.sig || 'WAIT', conf: raw.conf || 55, resume: raw.resume || '',
-    vixOverride: ovrd,
-    regime: {type: reg, expl: raw.reg_note || ''},
-    marches: [
-      {a:'XAU/USD',p:raw.xau||'?',v:raw.xau_var||'?',sig:'neutre',c:''},
-      {a:'US30',p:raw.us30||'?',v:raw.us30_var||'?',sig:(raw.us30_var||'').indexOf('-')>=0?'baissier':'haussier',c:reg==='DOLLAR_REFUGE'?((raw.us30_var||'').indexOf('-')>=0?'Appels marge → or baisse':'Fin appels marge → or rebondit'):'Correlation normale'},
-      {a:'DXY',p:raw.dxy||'?',v:'?',sig:'neutre',c:''},
-      {a:'US10Y',p:raw.y10||'?',v:'?',sig:'neutre',c:''},
-      {a:'VIX',p:raw.vix||'?',v:'?',niveau:vv>30?'panique>30':vv>25?'élevé 25-30':'modéré',sig:vm?'baissier':'haussier',c:vm?'VIX monte → dollar refuge → or baisse':'VIX stable/baisse'}
-    ].filter(function(m){return m.p!=='?';}),
-    news: [
-      raw.trump?{src:'Trump',txt:raw.trump}:null,
-      raw.fed?{src:'Fed',txt:raw.fed}:null,
-      raw.geo?{src:'Géo/Iran',txt:raw.geo}:null
-    ].filter(Boolean),
-    mf: {H1:{sig:raw.h1||'WAIT',r:raw.h1_note||''},H4:{sig:raw.h4||'WAIT',r:raw.h4_note||''},conf:raw.h1===raw.h4?'alignés':'divergents'},
-    alerte: raw.alerte || '',
-    niv: {e:raw.entree||'?',sl:raw.sl||'?',tp:raw.tp||'?'}
+// Gemini call
+function gemini(sys, usr, tok, cb){
+  if(!KEY){ cb(new Error('Cle API manquante')); return; }
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST','https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+KEY);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout = 60000;
+  xhr.ontimeout = function(){ cb(new Error('Timeout 60s')); };
+  xhr.onerror = function(){ cb(new Error('Erreur reseau')); };
+  xhr.onload = function(){
+    try{
+      var d = JSON.parse(xhr.responseText);
+      if(d.error){ cb(new Error(d.error.message||'Gemini error')); return; }
+      var txt='';
+      if(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts){
+        d.candidates[0].content.parts.forEach(function(p){if(p.text)txt+=p.text;});
+      }
+      if(!txt){ cb(new Error('Reponse vide')); return; }
+      cb(null, txt);
+    }catch(e){ cb(e); }
   };
+  var body = {
+    systemInstruction:{parts:[{text:sys}]},
+    contents:[{role:'user',parts:[{text:usr}]}],
+    generationConfig:{maxOutputTokens:tok||600,temperature:0.3},
+    tools:[{google_search:{}}]
+  };
+  xhr.send(JSON.stringify(body));
 }
 
-// ═══ MOCK DATA ═══
-var MOCK = {sig:'SELL',conf:72,reg:'DOLLAR_REFUGE',reg_note:'VIX 31 + guerre Iran active',vix:'31.2',vix_dir:'monte',us30:'45800',us30_var:'-1.7%',dxy:'99.8',y10:'4.41%',xau:'4380',xau_var:'-2.3%',trump:'Pas de deal Iran ultimatum actif',fed:'Fed hawkish 1 coupe 2026',geo:'Guerre Iran semaine 4 Hormuz bloque',h1:'SELL',h4:'SELL',h1_note:'Sous MM50 momentum baissier',h4_note:'4 semaines rouges structure baissiere',entree:'4400-4420',sl:'4480',tp:'4200',resume:'DOLLAR REFUGE VIX monte or sous pression SELL rebonds',alerte:'Trump deadline 6 avril risque spike'};
+// FJ
+function loadFJ(){
+  document.getElementById('fjcont').textContent = 'Scan FJ en cours...';
+  var sys = 'Cherche sur le web les headlines recentes de financialjuice.com impactant XAU/USD des 2 dernieres heures. JSON uniquement (zero apostrophe): {"h":[{"t":"headline","heure":"HH:MM","niv":"CRITIQUE|ELEVE|MODERE","imp":"haussier|baissier|neutre"}],"resume":"synthese"}';
+  gemini(sys, 'Headlines FinancialJuice or maintenant', 400, function(err, txt){
+    if(err){ document.getElementById('fjcont').innerHTML='<span style="color:#ff6644">⚠ '+err.message+'</span>'; return; }
+    try{
+      FJD = pr(txt);
+      var AC={CRITIQUE:{c:'#ff2244',icon:'🚨'},ELEVE:{c:'#ff8822',icon:'⚠️'},MODERE:{c:'#ffcc44',icon:'ℹ️'}};
+      var IMP={haussier:{c:'#00ff88',t:'▲'},baissier:{c:'#ff4466',t:'▼'},neutre:{c:'#ffcc44',t:'●'}};
+      var h='';
+      if(FJD.resume) h+='<div style="font-size:11px;color:#6a8890;font-style:italic;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05)">'+FJD.resume+'</div>';
+      h+='<div style="display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto">';
+      (FJD.h||[]).forEach(function(item){
+        var a=AC[item.niv]||AC.MODERE;
+        var imp=IMP[item.imp]||IMP.neutre;
+        h+='<div style="border-left:3px solid '+a.c+';padding:6px 10px;background:rgba(255,255,255,.02);border-radius:4px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+        h+='<div style="flex:1"><div style="font-size:9px;color:'+a.c+';font-weight:bold;margin-bottom:2px">'+a.icon+' '+item.niv+(item.heure?' · '+item.heure:'')+'</div>';
+        h+='<div style="font-size:11px;color:#8aaccc;line-height:1.5">'+item.t+'</div></div>';
+        h+='<span style="font-size:14px;color:'+imp.c+';font-weight:bold">'+imp.t+'</span></div>';
+      });
+      h+='</div>';
+      document.getElementById('fjcont').innerHTML = h;
+    }catch(e){ document.getElementById('fjcont').innerHTML='<span style="color:#ff6644">⚠ Parse error</span>'; }
+  });
+}
 
-// ═══ MAIN ANALYSIS ═══
-async function runAnalysis() {
-  var sid = getSid();
-  var s = SESSIONS[sid];
+document.getElementById('fjbtn').onclick = loadFJ;
+document.getElementById('fjabtn').onclick = function(){ scan(); };
 
-  document.getElementById('loader').style.display = 'block';
-  document.getElementById('result').style.display = 'none';
-  document.getElementById('errbox').style.display = 'none';
-  document.getElementById('scanbtn').disabled = true;
-  document.getElementById('scanbtn').textContent = '⟳  ANALYSE...';
+// Prompt
+function prompt_str(){
+  var h = parseInt(new Date().toLocaleString('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit'})||0);
+  var sid = h>=23||h<7?'ASIE':h>=7&&h<16?'EUROPE':'AMERIQUE';
+  var fj = FJD&&FJD.h ? 'Headlines FJ: '+FJD.h.slice(0,3).map(function(x){return x.t;}).join(' | ') : '';
+  return 'Expert XAU/USD. Session: '+sid+'. '+fj+'\n\nREGIME PRIORITAIRE:\n- VIX>25 OU guerre active = DOLLAR_REFUGE (or baisse quand VIX monte)\n- DOLLAR_REFUGE: US30 remonte = fin appels marge = or rebondit\n- OR_REFUGE seulement si VIX<20 ET pas de guerre\n\nCherche sur le web: XAU prix, US30, DXY, VIX direction, US10Y, news Trump, Fed, Iran.\n\nJSON uniquement sur une ligne (zero apostrophe):\n{"sig":"BUY|SELL|WAIT","conf":75,"reg":"DOLLAR_REFUGE","reg_note":"raison","vix":"31","vix_dir":"monte","us30":"45800","us30_var":"-1.7%","dxy":"99.8","y10":"4.41%","xau":"4380","xau_var":"-2.1%","trump":"post ou rien","fed":"annonce","geo":"situation","h1":"SELL","h4":"SELL","h1_note":"raison H1","h4_note":"raison H4","entree":"4400-4420","sl":"4480","tp":"4200","resume":"signal 20 mots","alerte":"alerte principale"}';
+}
 
-  var idx = 0;
-  stepTimer = setInterval(function() {
-    idx = Math.min(idx+1, STEPS.length-1);
-    document.getElementById('steplist').innerHTML = STEPS.map(function(st, i) {
-      return '<div style="font-size:10px;padding:3px 0;display:flex;align-items:center;gap:8px;color:' + (i<idx?s.color+'55':i===idx?s.color:'#1a2e40') + '"><span>' + (i<idx?'✓':i===idx?'▶':'○') + '</span>' + st + '</div>';
+// Main scan
+function scan(){
+  if(!MOCK && !KEY){
+    document.getElementById('keysec').style.display='block';
+    document.getElementById('err').style.display='block';
+    document.getElementById('err').textContent='⚠ Colle ta clé Gemini en haut et clique Sauver';
+    return;
+  }
+  document.getElementById('loader').style.display='block';
+  document.getElementById('res').innerHTML='';
+  document.getElementById('err').style.display='none';
+  document.getElementById('scanbtn').disabled=true;
+  document.getElementById('scanbtn').textContent='⟳  ANALYSE...';
+  STEP_IDX=0;
+  clearInterval(ST);
+  ST = setInterval(function(){
+    STEP_IDX = Math.min(STEP_IDX+1, STEPS.length-1);
+    document.getElementById('steps').innerHTML = STEPS.map(function(s,i){
+      return '<div style="font-size:10px;padding:3px 0;display:flex;align-items:center;gap:8px;color:'+(i<STEP_IDX?'rgba(0,255,136,.4)':i===STEP_IDX?'#00ff88':'#1a2e40')+'"><span>'+(i<STEP_IDX?'✓':i===STEP_IDX?'▶':'○')+'</span>'+s+'</div>';
     }).join('');
   }, 1200);
 
-  try {
-    var raw;
-    if (mockMode) {
-      await new Promise(function(r){setTimeout(r,1500);});
-      raw = MOCK;
-    } else {
-      if (!apiKey) { throw new Error('Clé API manquante — sauvegarde ta clé Gemini en haut de la page'); }
-      var txt = await callGemini(buildPrompt(sid), 'Analyse XAU/USD ' + new Date().toLocaleString('fr-FR'), 600);
-      raw = parseResp(txt);
-    }
+  function done(raw){
+    clearInterval(ST);
+    document.getElementById('loader').style.display='none';
+    document.getElementById('scanbtn').disabled=false;
+    document.getElementById('scanbtn').textContent='⚡ ANALYSER MAINTENANT';
+    showResult(raw);
+    HIST = HIST.slice(-9);
+    HIST.push({raw:raw, t:new Date().toLocaleTimeString('fr-FR')});
+    document.getElementById('lu').textContent='Analyse: '+new Date().toLocaleTimeString('fr-FR')+' · '+HIST.length+' signal(s)';
+  }
 
-    var p = normalize(raw);
-    history = history.slice(-9).concat([{p:p, h:new Date().toLocaleTimeString('fr-FR'), sid:sid}]);
-    renderResult(p, sid);
-    document.getElementById('lastupd').textContent = 'Analyse: ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + history.length + ' signal(s)';
+  function fail(e){
+    clearInterval(ST);
+    document.getElementById('loader').style.display='none';
+    document.getElementById('scanbtn').disabled=false;
+    document.getElementById('scanbtn').textContent='⚡ ANALYSER MAINTENANT';
+    document.getElementById('err').style.display='block';
+    document.getElementById('err').textContent='⚠ '+e.message;
+  }
 
-  } catch(e) {
-    document.getElementById('errbox').style.display = 'block';
-    document.getElementById('errbox').textContent = '⚠ ' + e.message;
-  } finally {
-    clearInterval(stepTimer);
-    document.getElement
+  if(MOCK){
+    setTimeout(function(){ done(MOCK_D); }, 1500);
+    return;
+  }
+
+  gemini(prompt_str(), 'Analyse XAU/USD '+new Date().toLocaleString('fr-FR'), 600, function(err, txt){
+    if(err){ fail(err); return; }
+    try{ done(pr(txt)); }catch(e){ fail(e); }
+  });
+}
+
+document.getElementById('scanbtn').onclick = scan;
+
+// Show result
+function showResult(raw){
+  var vv=parseFloat(raw.vix||0), vm=raw.vix_dir==='monte';
+  var reg=raw.reg||'DOLLAR_REFUGE';
+  if((vv>25||vm)&&reg==='OR_REFUGE') reg='DOLLAR_REFUGE';
+  var sc=raw.sig==='BUY'?'#00ff88':raw.sig==='SELL'?'#ff4466':'#ffcc44';
+  var si=raw.sig==='BUY'?'▲':raw.sig==='SELL'?'▼':'●';
+  var rc=reg==='DOLLAR_REFUGE'?{icon:'💵',label:'DOLLAR = REFUGE',c:'#4488ff'}:reg==='OR_REFUGE'?{icon:'🥇',label:'OR = REFUGE',c:'#d4a853'}:{icon:'🔥',label:'RISK-ON',c:'#ff6644'};
+  var h='';
+
+  // VIX override
+  if((vv>25||vm)&&raw.reg==='OR_REFUGE') h+='<div class="card" style="border-color:#ffcc4433;background:rgba(255,200,0,.06);margin-bottom:8px"><span style="color:#ffcc44;font-weight:bold;font-size:10px">⚡ VIX OVERRIDE — </span><span style="font-size:11px;color:#aa8830">Régime forcé DOLLAR REFUGE car VIX élevé.</span></div>';
+
+  // Alerte
+  if(raw.alerte) h+='<div class="card" style="border-color:rgba(255,136,34,.25);background:rgba(255,136,34,.06);margin-bottom:8px"><div style="font-size:9px;color:#ff8822;font-weight:bold;margin-bottom:4px">⚠️ ALERTE ÉLEVÉE</div><div style="font-size:11px;color:#ff8822;line-height:1.5">'+raw.alerte+'</div></div>';
+
+  // Régime
+  h+='<div class="card" style="border-color:'+rc.c+'33;background:'+rc.c+'0d;margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">'+rc.icon+'</span><div><div style="font-size:9px;color:'+rc.c+';font-weight:bold;letter-spacing:2px;margin-bottom:4px">RÉGIME · '+rc.label+'</div><div style="font-size:11px;color:'+rc.c+'bb;line-height:1.6">'+(raw.reg_note||'')+'</div></div></div></div>';
+
+  // H1/H4
+  var cc=raw.h1===raw.h4?'#00ff88':'#ffcc44';
+  var sc1=raw.h1==='BUY'?'#00ff88':raw.h1==='SELL'?'#ff4466':'#ffcc44';
+  var sc4=raw.h4==='BUY'?'#00ff88':raw.h4==='SELL'?'#ff4466':'#ffcc44';
+  h+='<div class="card" style="margin-bottom:12px"><div style="font-size:9px;color:#4a7090;letter-spacing:3px;margin-bottom:10px">▸ MULTI-TIMEFRAME H1/H4</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+  h+='<div style="background:'+sc1+'0a;border:1px solid '+sc1+'33;border-radius:8px;padding:10px"><div style="font-size:9px;color:'+sc1+';font-weight:bold;margin-bottom:4px">H1</div><div style="font-size:22px;font-weight:bold;color:'+sc1+'">'+(raw.h1==='BUY'?'▲':raw.h1==='SELL'?'▼':'●')+' '+raw.h1+'</div><div style="font-size:9px;color:'+sc1+'88;margin-top:4px;line-height:1.4">'+(raw.h1_note||'')+'</div></div>';
+  h+='<div style="background:'+sc4+'0a;border:1px solid '+sc4+'33;border-radius:8px;padding:10px"><div style="font-size:9px;color:'+sc4+';font-weight:bold;margin-bottom:4px">H4</div><div style="font-size:22px;font-weight:bold;color:'+sc4+'">'+(raw.h4==='BUY'?'▲':raw.h4==='SELL'?'▼':'●')+' '+raw.h4+'</div><div style="font-size:9px;color:'+sc4+'88;margin-top:4px;line-height:1.4">'+(raw.h4_note||'')+'</div></div>';
+  h+='</div><div style="text-align:center;font-size:10px;color:'+cc+';font-weight:bold">'+(raw.h1===raw.h4?'✓ SIGNAUX ALIGNÉS':'⚡ SIGNAUX DIVERGENTS')+'</div></div>';
+
+  // Signal
+  h+='<div class="card" style="border-color:'+sc+'44;background:rgba(0,0,0,.5);margin-bottom:12px;box-shadow:0 0 30px '+sc+'15">';
+  h+='<div style="font-size:9px;color:#2a4060;letter-spacing:3px;margin-bottom:6px">SIGNAL FINAL · XAU/USD</div>';
+  h+='<div class="big" style="color:'+sc+';text-shadow:0 0 30px '+sc+'55;margin-bottom:8px">'+si+' '+raw.sig+'</div>';
+  h+='<div style="font-size:12px;color:#6a8aaa;line-height:1.6;margin-bottom:10px">'+(raw.resume||'')+'</div>';
+  h+='<div style="font-size:10px;color:#3a5060">CONFIANCE: <span style="color:'+sc+';font-size:14px;font-weight:bold">'+(raw.conf||55)+'%</span></div></div>';
+
+  // Marchés
+  var ms=[{a:'XAU/USD',p:raw.xau,v:raw.xau_var,ico:'🥇',c:'#d4a853'},{a:'US30',p:raw.us30,v:raw.us30_var,ico:'📈',c:'#ff6644'},{a:'DXY',p:raw.dxy,v:'?',ico:'💵',c:'#4488ff'},{a:'US10Y',p:raw.y10,v:'?',ico:'📜',c:'#44aaff'},{a:'VIX',p:raw.vix,v:(vm?'+':'-'),ico:'😱',c:'#ff44aa'}];
+  h+='<div class="card" style="margin-bottom:12px"><div style="font-size:9px;color:#4a7090;letter-spacing:3px;margin-bottom:10px">▸ MARCHÉS CORRÉLÉS</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  ms.forEach(function(m){
+    if(!m.p||m.p==='?') return;
+    h+='<div style="background:rgba(0,0,0,.3);border:1px solid '+m.c+'22;border-radius:8px;padding:10px">';
+    h+='<div style="font-size:9px;color:'+m.c+';font-weight:bold;margin-bottom:4px">'+m.ico+' '+m.a+'</div>';
+    h+='<div style="font-size:14px;color:#8aaccc;font-weight:bold;margin-bottom:3px">'+m.p+'</div>';
+    h+='<div style="font-size:11px;color:'+(m.v&&m.v.indexOf('-')>=0?'#ff4466':'#00ff88')+'">'+m.v+'</div></div>';
+  });
+  h+='</div></div>';
+
+  // News
+  var ns=[];
+  if(raw.trump) ns.push({src:'Trump',txt:raw.trump});
+  if(raw.fed) ns.push({src:'Fed',txt:raw.fed});
+  if(raw.geo) ns.push({src:'Géo/Iran',txt:raw.geo});
+  if(ns.length){
+    h+='<div class="card" style="margin-bottom:12px"><div style="font-size:9px;color:#4a7090;letter-spacing:3px;margin-bottom:10px">▸ NEWS</div>';
+    ns.forEach(function(n){
+      h+='<div class="row"><div><div style="font-size:9px;color:#d4a853;font-weight:bold;margin-bottom:3px">'+n.src.toUpperCase()+'</div><div style="font-size:10px;color:#4a6878;line-height:1.5">'+n.txt+'</div></div></div>';
+    });
+    h+='</div>';
+  }
+  
