@@ -135,15 +135,47 @@ function cj(s) {
 }
 
 function pj(txt) {
-  var s = txt.indexOf('{');
-  var e = txt.lastIndexOf('}');
-  if (s < 0) throw new Error('JSON introuvable');
-  var sl = txt.slice(s, e + 1);
-  try { return JSON.parse(sl); } catch(e1) {
-    try { return JSON.parse(cj(sl)); } catch(e2) {
-      return {sig:'WAIT',conf:55,reg:'DOLLAR_REFUGE',reg_note:'Extrait',vix:'?',vix_dir:'stable',us30:'?',us30_var:'?',dxy:'?',y10:'?',xau:'?',xau_var:'?',trump:'',fed:'',geo:'',h1:'WAIT',h4:'WAIT',h1_note:'',h4_note:'',entree:'?',sl:'?',tp:'?',resume:'JSON corrompu',alerte:'Verifier'};
+  // Try to find JSON block containing "sig" key
+  var best = null;
+  var pos = 0;
+  while (true) {
+    var s = txt.indexOf('{', pos);
+    if (s < 0) break;
+    var e = txt.lastIndexOf('}');
+    if (e <= s) break;
+    var sl = txt.slice(s, e + 1);
+    if (sl.indexOf('"sig"') >= 0 || sl.indexOf('"signal"') >= 0) {
+      try { best = JSON.parse(sl); break; } catch(e1) {
+        try { best = JSON.parse(cj(sl)); break; } catch(e2) {}
+      }
     }
+    pos = s + 1;
   }
+  if (best) return best;
+  // Fallback: extract key fields with regex
+  var sig = (txt.match(/"sig"\s*:\s*"(BUY|SELL|WAIT)"/) || txt.match(/"signal"\s*:\s*"(BUY|SELL|WAIT)"/)) || [];
+  var conf = txt.match(/"conf(?:idence)?"\s*:\s*(\d+)/);
+  var xau = txt.match(/"xau"\s*:\s*"([^"]+)"/);
+  var reg = txt.match(/"reg(?:ime)?"\s*:\s*"(OR_REFUGE|DOLLAR_REFUGE|RISK_ON)"/);
+  var resume = txt.match(/"resume"\s*:\s*"([^"]{5,80})"/);
+  var alerte = txt.match(/"alerte"\s*:\s*"([^"]{5,80})"/);
+  var entree = txt.match(/"entree"\s*:\s*"([^"]+)"/);
+  var sl2 = txt.match(/"sl"\s*:\s*"([^"]+)"/);
+  var tp = txt.match(/"tp"\s*:\s*"([^"]+)"/);
+  var vix = txt.match(/"vix"\s*:\s*"([^"]+)"/);
+  var vixd = txt.match(/"vix_dir"\s*:\s*"([^"]+)"/);
+  var h1 = txt.match(/"h1"\s*:\s*"(BUY|SELL|WAIT)"/);
+  var h4 = txt.match(/"h4"\s*:\s*"(BUY|SELL|WAIT)"/);
+  return {
+    sig: (sig[1] || 'WAIT'), conf: parseInt(conf && conf[1] || '55'),
+    reg: (reg && reg[1] || 'DOLLAR_REFUGE'), reg_note: 'Extrait auto',
+    vix: (vix && vix[1] || '?'), vix_dir: (vixd && vixd[1] || 'stable'),
+    xau: (xau && xau[1] || '?'), xau_var: '?', us30: '?', us30_var: '?', dxy: '?', y10: '?',
+    trump: '', fed: '', geo: '',
+    h1: (h1 && h1[1] || 'WAIT'), h4: (h4 && h4[1] || 'WAIT'), h1_note: '', h4_note: '',
+    entree: (entree && entree[1] || '?'), sl: (sl2 && sl2[1] || '?'), tp: (tp && tp[1] || '?'),
+    resume: (resume && resume[1] || 'Signal extrait auto'), alerte: (alerte && alerte[1] || '')
+  };
 }
 
 function gm(sys, usr, tok, cb) {
@@ -340,25 +372,4 @@ function showR(raw) {
     h += '<div style="font-size:11px;color:#ff8822;line-height:1.5">' + raw.alerte + '</div></div>';
   }
 
-  if (HI.length > 0) {
-    h += '<div class="card" style="margin-bottom:12px"><div style="font-size:9px;color:#4a7090;letter-spacing:3px;margin-bottom:10px">HISTORIQUE</div>';
-    h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-    var rev = HI.slice().reverse();
-    for (var i = 0; i < rev.length; i++) {
-      var it = rev[i];
-      var r = it.raw;
-      var sc2 = r.sig === 'BUY' ? '#00ff88' : r.sig === 'SELL' ? '#ff4466' : '#ffcc44';
-      h += '<div style="background:' + sc2 + '11;border:1px solid ' + sc2 + '33;border-radius:8px;padding:8px 12px">';
-      h += '<div style="font-size:9px;color:#3a5060;margin-bottom:3px">' + it.t + '</div>';
-      h += '<div style="font-size:18px;font-weight:bold;color:' + sc2 + '">' + (r.sig === 'BUY' ? '▲' : r.sig === 'SELL' ? '▼' : '●') + ' ' + r.sig + '</div>';
-      h += '<div style="font-size:10px;color:' + sc2 + '99;margin-top:2px">' + (r.conf || 55) + '%</div></div>';
-    }
-    h += '</div></div>';
-  }
-
-  h += '<div style="font-size:9px;color:#1a2e40;text-align:center;letter-spacing:1px;margin-bottom:16px">OUTIL AIDE DECISION - STOP-LOSS OBLIGATOIRE</div>';
-  document.getElementById('rs').innerHTML = h;
-}
-</script>
-</body></html>
-
+  
