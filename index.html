@@ -13,7 +13,7 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
 </head>
 <body>
 
-<p style="font-size:9px;color:#1a4530;letter-spacing:3px;margin-bottom:4px">GOLD SCANNER v5.8 - GEMINI</p>
+<p style="font-size:9px;color:#1a4530;letter-spacing:3px;margin-bottom:4px">GOLD SCANNER v5 - GEMINI</p>
 <h1 style="font-size:20px;color:#d4a853;margin-bottom:4px">GOLD SESSION SCANNER</h1>
 <p style="font-size:9px;color:#3a5570;letter-spacing:2px;margin-bottom:14px">GEMINI FLASH - REGIME REFUGE - DXY INVERSE</p>
 
@@ -31,9 +31,38 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
 </div>
 
 <div class="gc">
-  <div id="gs_sess" style="font-size:11px;font-weight:bold;color:#44aaff">...</div>
+  <div id="gs_sess" style="font-size:11px;font-weight:bold;color:#44aaff">LIVE</div>
   <div id="gs_clk" style="font-size:18px;font-weight:bold;margin-top:4px;color:#44aaff">--:--:--</div>
 </div>
+
+<!-- HORLOGE : script minimal immédiat -->
+<script>
+window.onerror = function(msg, src, line) {
+  var el = document.getElementById('gs_err');
+  if (el) { el.style.display = 'block'; el.textContent = 'ERR L' + line + ': ' + msg; }
+};
+function gs_pad(n) { return n < 10 ? '0' + n : '' + n; }
+function gs_time(d) { return gs_pad(d.getHours()) + ':' + gs_pad(d.getMinutes()) + ':' + gs_pad(d.getSeconds()); }
+function gs_tick() {
+  try {
+    var d = new Date();
+    var hh = d.getHours();
+    var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh < 16) ? 'EUROPE' : 'AMERIQUE';
+    var c = sid === 'ASIE' ? '#ff6644' : sid === 'EUROPE' ? '#44aaff' : '#00ff88';
+    document.getElementById('gs_clk').textContent = gs_time(d);
+    document.getElementById('gs_clk').style.color = c;
+    document.getElementById('gs_sess').textContent = 'LIVE - ' + sid;
+    document.getElementById('gs_sess').style.color = c;
+    var sb = document.getElementById('gs_scan');
+    if (sb) { sb.style.color = c; sb.style.borderColor = c + '44'; }
+  } catch(e) {
+    var el = document.getElementById('gs_err');
+    if (el) { el.style.display = 'block'; el.textContent = 'TICK ERR: ' + e.message; }
+  }
+}
+gs_tick();
+setInterval(gs_tick, 1000);
+</script>
 
 <div class="gc">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -58,14 +87,6 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
 <div id="gs_rs"></div>
 
 <script>
-(function() {
-
-window.onerror = function(msg, src, line) {
-  var el = document.getElementById('gs_err');
-  if (el) { el.style.display = 'block'; el.textContent = 'ERR L' + line + ': ' + msg; }
-};
-
-// Vars
 var GS_KEY = '';
 var GS_MOCK = false;
 var GS_FJD = null;
@@ -84,33 +105,10 @@ var GS_MK = {
   alerte:'VIX baisse 27 surveiller DXY pour confirmer BUY'
 };
 
-function gs_pad(n) { return (n < 10 ? '0' : '') + n; }
-
-function gs_time(d) {
-  return gs_pad(d.getHours()) + ':' + gs_pad(d.getMinutes()) + ':' + gs_pad(d.getSeconds());
-}
-
 function gs_dt(d) {
   return gs_pad(d.getDate()) + '/' + gs_pad(d.getMonth()+1) + '/' + d.getFullYear() + ' ' + gs_time(d);
 }
 
-function gs_tick() {
-  var d = new Date();
-  var hh = d.getHours();
-  var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh < 16) ? 'EUROPE' : 'AMERIQUE';
-  var c = (sid === 'ASIE') ? '#ff6644' : (sid === 'EUROPE') ? '#44aaff' : '#00ff88';
-  document.getElementById('gs_clk').textContent = gs_time(d);
-  document.getElementById('gs_clk').style.color = c;
-  document.getElementById('gs_sess').textContent = 'LIVE - ' + sid;
-  document.getElementById('gs_sess').style.color = c;
-  document.getElementById('gs_scan').style.color = c;
-  document.getElementById('gs_scan').style.borderColor = c + '44';
-}
-
-gs_tick();
-setInterval(gs_tick, 1000);
-
-// Cle
 try {
   var _k = localStorage.getItem('gs_key');
   if (_k && _k.length > 10) { GS_KEY = _k; document.getElementById('gs_keysec').style.display = 'none'; }
@@ -349,6 +347,4 @@ function gs_showR(raw) {
     var m = ms[i]; if (!m.p || m.p === '?') continue;
     var vc = (m.v && m.v.indexOf('-') >= 0) ? '#ff4466' : '#00ff88';
     h += '<div style="border:1px solid ' + m.c + '33;border-radius:8px;padding:10px">';
-    h += '<div style="font-size:9px;color:' + m.c + ';font-weight:bold">' + m.a + '</div>';
-    h += '<div style="font-size:14px;color:#8aaccc;font-weight:bold">' + m.p + '</div>';
-    h += '<div style="font-size:11px;color:' + vc + '">' + m.v + '</div></d
+    h += '<div style="font-size:9px;color:' + m.c + ';font
