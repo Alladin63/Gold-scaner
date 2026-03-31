@@ -29,8 +29,8 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
 </div>
 
 <div class="c">
-  <div id="sess" style="font-size:11px;font-weight:bold;color:#3a5570">Chargement...</div>
-  <div id="clk" style="font-size:18px;font-weight:bold;margin-top:4px">--:--:--</div>
+  <div id="sess" style="font-size:11px;font-weight:bold;color:#44aaff">LIVE - SESSION EUROPE</div>
+  <div id="clk" style="font-size:18px;font-weight:bold;margin-top:4px;color:#44aaff">--:--:--</div>
 </div>
 
 <div class="c">
@@ -74,6 +74,20 @@ var MK = {
   alerte:'VIX baisse 27 surveiller DXY pour confirmer BUY'
 };
 
+// Formatage heure sans toLocaleTimeString (crash Android)
+function fmtTime(d) {
+  var h = d.getHours();
+  var m = d.getMinutes();
+  var s = d.getSeconds();
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+function fmtDateTime(d) {
+  var day = d.getDate();
+  var mo = d.getMonth() + 1;
+  var yr = d.getFullYear();
+  return (day < 10 ? '0' : '') + day + '/' + (mo < 10 ? '0' : '') + mo + '/' + yr + ' ' + fmtTime(d);
+}
+
 // Charger cle sauvegardee
 try {
   var _k = localStorage.getItem('gk2');
@@ -83,7 +97,6 @@ try {
   }
 } catch(e) {}
 
-// Sauver cle
 document.getElementById('savebtn').onclick = function() {
   var v = document.getElementById('ki').value.trim();
   if (!v || v.length < 10) { document.getElementById('ks').textContent = 'Cle trop courte'; return; }
@@ -93,11 +106,11 @@ document.getElementById('savebtn').onclick = function() {
   document.getElementById('lu').textContent = 'Cle sauvegardee - pret a analyser';
 };
 
-// Horloge
+// Horloge - formatage manuel uniquement
 function tick() {
   var d = new Date();
-  document.getElementById('clk').textContent = d.toLocaleTimeString('fr-FR');
   var h = d.getHours();
+  document.getElementById('clk').textContent = fmtTime(d);
   var sid = (h >= 23 || h < 7) ? 'ASIE' : (h >= 7 && h < 16) ? 'EUROPE' : 'AMERIQUE';
   var c = sid === 'ASIE' ? '#ff6644' : sid === 'EUROPE' ? '#44aaff' : '#00ff88';
   document.getElementById('sess').textContent = 'LIVE - SESSION ' + sid;
@@ -109,7 +122,6 @@ function tick() {
 tick();
 setInterval(tick, 1000);
 
-// Mock toggle
 document.getElementById('mb').onclick = function() {
   GM = !GM;
   this.textContent = GM ? 'MOCK ON' : 'MOCK';
@@ -119,7 +131,6 @@ document.getElementById('mb').onclick = function() {
 
 // Parser JSON robuste
 function pj(txt) {
-  // Nettoyer markdown
   var clean = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
   var found = null;
   var start = 0;
@@ -135,7 +146,6 @@ function pj(txt) {
     var slice = clean.slice(s, e + 1);
     if (slice.indexOf('"sig"') >= 0) {
       try { found = JSON.parse(slice); break; } catch(e1) {}
-      // Nettoyage caracteres problematiques
       var fixed = '';
       var inStr = false, esc = false;
       for (var j = 0; j < slice.length; j++) {
@@ -157,7 +167,6 @@ function pj(txt) {
     start = s + 1;
   }
   if (found) return found;
-  // Fallback regex
   var sig = (txt.match(/"sig"\s*:\s*"(BUY|SELL|WAIT)"/) || [])[1] || 'WAIT';
   var conf = parseInt((txt.match(/"conf"\s*:\s*(\d+)/) || [])[1] || '55');
   var reg = (txt.match(/"reg"\s*:\s*"(OR_REFUGE|DOLLAR_REFUGE|RISK_ON)"/) || [])[1] || 'DOLLAR_REFUGE';
@@ -190,7 +199,6 @@ function gm(sys, usr, tok, cb) {
         var pts = d.candidates[0].content.parts;
         for (var i = 0; i < pts.length; i++) { if (pts[i].text) t += pts[i].text; }
       }
-      // Afficher debug
       var dbg = document.getElementById('dbg');
       dbg.style.display = 'block';
       dbg.textContent = 'RAW: ' + t.slice(0, 400);
@@ -198,19 +206,18 @@ function gm(sys, usr, tok, cb) {
       cb(null, t);
     } catch(ex) { cb(ex); }
   };
-  var body = {
+  xhr.send(JSON.stringify({
     systemInstruction: { parts: [{ text: sys }] },
     contents: [{ role: 'user', parts: [{ text: usr }] }],
     generationConfig: { maxOutputTokens: tok || 800, temperature: 0.2 },
     tools: [{ googleSearch: {} }]
-  };
-  xhr.send(JSON.stringify(body));
+  }));
 }
 
 // FinancialJuice
 document.getElementById('fjbtn').onclick = function() {
   document.getElementById('fj').textContent = 'Scan en cours...';
-  var sys = 'Expert XAU/USD. Cherche headlines recentes sur financialjuice.com impactant or, DXY, VIX, Fed, Trump, Iran. Reponds UNIQUEMENT avec JSON valide sans markdown: {"h":[{"t":"headline","heure":"HH:MM","niv":"CRITIQUE","imp":"haussier"}],"resume":"synthese"}. niv=CRITIQUE|ELEVE|MODERE. imp=haussier|baissier|neutre.';
+  var sys = 'Expert XAU/USD. Cherche headlines recentes financialjuice.com impactant or, DXY, VIX, Fed, Trump, Iran. Reponds UNIQUEMENT JSON valide sans markdown: {"h":[{"t":"headline","heure":"HH:MM","niv":"CRITIQUE","imp":"haussier"}],"resume":"synthese"}. niv=CRITIQUE|ELEVE|MODERE. imp=haussier|baissier|neutre.';
   gm(sys, 'Headlines FinancialJuice or XAU USD maintenant', 500, function(err, txt) {
     if (err) { document.getElementById('fj').textContent = 'Erreur: ' + err.message; return; }
     try {
@@ -279,8 +286,8 @@ document.getElementById('sb').onclick = function() {
     document.getElementById('sb').textContent = 'ANALYSER';
     showR(raw);
     HI = HI.slice(-9);
-    HI.push({ raw: raw, t: new Date().toLocaleTimeString('fr-FR') });
-    document.getElementById('lu').textContent = 'Analyse: ' + new Date().toLocaleTimeString('fr-FR') + ' - ' + HI.length + ' signal(s)';
+    HI.push({ raw: raw, t: fmtTime(new Date()) });
+    document.getElementById('lu').textContent = 'Analyse: ' + fmtTime(new Date()) + ' - ' + HI.length + ' signal(s)';
   }
   function fail(msg) {
     clearInterval(TI);
@@ -292,20 +299,19 @@ document.getElementById('sb').onclick = function() {
   }
 
   if (GM) { setTimeout(function() { done(MK); }, 1500); return; }
-  gm(getP(), 'Analyse XAU/USD maintenant ' + new Date().toLocaleString('fr-FR'), 800, function(err, txt) {
+  gm(getP(), 'Analyse XAU/USD maintenant ' + fmtDateTime(new Date()), 800, function(err, txt) {
     if (err) { fail(err.message); return; }
     try { done(pj(txt)); } catch(ex) { fail('Parse: ' + ex.message); }
   });
 };
 
-// Affichage
+// Affichage resultats
 function showR(raw) {
   var vv = parseFloat(raw.vix || '0');
   var vm = raw.vix_dir === 'monte';
   var reg = raw.reg || 'DOLLAR_REFUGE';
   if ((vv > 25 || vm) && reg === 'OR_REFUGE') reg = 'DOLLAR_REFUGE';
   var sc = raw.sig === 'BUY' ? '#00ff88' : raw.sig === 'SELL' ? '#ff4466' : '#ffcc44';
-  var si = raw.sig === 'BUY' ? '[BUY]' : raw.sig === 'SELL' ? '[SELL]' : '[WAIT]';
   var siArrow = raw.sig === 'BUY' ? '&#9650;' : raw.sig === 'SELL' ? '&#9660;' : '&#9679;';
   var rc = reg === 'DOLLAR_REFUGE'
     ? { label: 'DOLLAR = REFUGE', c: '#4488ff' }
@@ -361,5 +367,4 @@ function showR(raw) {
     var m = ms[i]; if (!m.p || m.p === '?') continue;
     var vc = m.v && m.v.indexOf('-') >= 0 ? '#ff4466' : '#00ff88';
     h += '<div style="background:rgba(0,0,0,.3);border:1px solid ' + m.c + '22;border-radius:8px;padding:10px">';
-    h += '<div style="font-size:9px;color:' + m.c + ';font-weight:bold;margin-bottom:4px">' + m.a + '</div>';
-    h += '<div style="font-size:14px;color:#8aaccc;font-weight:bold;margin-bottom:3px">' + m.p + '</div
+ 
