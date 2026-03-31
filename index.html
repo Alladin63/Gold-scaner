@@ -67,7 +67,7 @@ var ST = ['Session active','Regime refuge','Scan FJ/Trump','US30+VIX+DXY','Prix 
 
 var MK = {sig:'SELL',conf:72,reg:'DOLLAR_REFUGE',reg_note:'VIX 31 + guerre Iran',vix:'31.2',vix_dir:'monte',us30:'45800',us30_var:'-1.7%',dxy:'99.8',y10:'4.41%',xau:'4380',xau_var:'-2.3%',trump:'Pas de deal Iran ultimatum',fed:'Fed hawkish 1 coupe 2026',geo:'Guerre Iran Hormuz bloque',h1:'SELL',h4:'SELL',h1_note:'Sous MM50 baissier',h4_note:'4 semaines rouges',entree:'4400-4420',sl:'4480',tp:'4200',resume:'DOLLAR REFUGE VIX monte or baisse SELL sur rebonds',alerte:'Trump deadline 6 avril risque spike'};
 
-(function() {
+window.onload = function() {
   try {
     var k = localStorage.getItem('gk');
     if (k && k.length > 5) {
@@ -76,7 +76,9 @@ var MK = {sig:'SELL',conf:72,reg:'DOLLAR_REFUGE',reg_note:'VIX 31 + guerre Iran'
       document.getElementById('lu').textContent = 'Cle Gemini chargee';
     }
   } catch(e) {}
-})();
+  tick();
+  setInterval(tick, 1000);
+};
 
 function doSave() {
   var v = document.getElementById('ki').value.trim();
@@ -113,8 +115,7 @@ function tick() {
     document.getElementById('clk').style.color = c;
   } catch(e) {}
 }
-tick();
-setInterval(tick, 1000);
+
 
 function cj(s) {
   var o = '', b = false, x = false;
@@ -245,7 +246,7 @@ function getP() {
     for (var i = 0; i < Math.min(3, FJ.h.length); i++) tops.push(FJ.h[i].t);
     fjtxt = 'Headlines FJ: ' + tops.join(' | ');
   }
-  return 'Expert XAU/USD. Session: ' + sid + '. ' + fjtxt + '\nREGIME: VIX>25 OU guerre = DOLLAR_REFUGE (or baisse si VIX monte). US30 remonte = fin appels marge = or rebondit. OR_REFUGE si VIX<20 ET pas guerre.\nCherche sur web: XAU prix, US30, DXY, VIX direction, US10Y, news Trump, Fed, Iran.\nJSON sur une ligne (zero apostrophe):\n{"sig":"SELL","conf":72,"reg":"DOLLAR_REFUGE","reg_note":"raison","vix":"31","vix_dir":"monte","us30":"45800","us30_var":"-1.7%","dxy":"99.8","y10":"4.41%","xau":"4380","xau_var":"-2.1%","trump":"post","fed":"annonce","geo":"Iran","h1":"SELL","h4":"SELL","h1_note":"raison","h4_note":"raison","entree":"4400-4420","sl":"4480","tp":"4200","resume":"signal 20 mots","alerte":"alerte"}';
+  return 'Expert XAU/USD. Session: ' + sid + '. ' + fjtxt + '\n\nREGLE FONDAMENTALE (toujours vraie):\nDXY monte = OR BAISSE. DXY baisse = OR MONTE. Cest la correlation inverse de base.\n\nREGIME:\n- VIX>25 OU guerre active = DOLLAR_REFUGE: dollar est le refuge, or sous pression\n- VIX baisse + desescalade = OR REBONDIT car DXY baisse\n- OR_REFUGE si VIX<20 ET pas de guerre ET or haussier\n- RISK_ON si marches calmes VIX<18\n\nCherche sur web: XAU prix actuel, DXY valeur et direction, VIX valeur, US30, US10Y, news Trump, Fed, Iran.\n\nJSON sur une ligne (zero apostrophe):\n{"sig":"SELL","conf":72,"reg":"DOLLAR_REFUGE","reg_note":"raison","vix":"27","vix_dir":"baisse","us30":"45800","us30_var":"-1.7%","dxy":"100.2","y10":"4.41%","xau":"4590","xau_var":"+1.2%","trump":"post ou rien","fed":"annonce","geo":"situation Iran","h1":"BUY","h4":"BUY","h1_note":"raison H1","h4_note":"raison H4","entree":"4570-4590","sl":"4520","tp":"4680","resume":"signal 20 mots","alerte":"alerte principale"}';
 }
 
 function doScan() {
@@ -367,9 +368,4 @@ function showR(raw) {
   h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span style="font-size:9px;color:#3a5060">TAKE PROFIT</span><span style="font-size:14px;color:#00ff88;font-weight:bold">' + (raw.tp || '?') + '</span></div></div>';
 
   if (raw.alerte) {
-    h += '<div class="card" style="border-color:rgba(255,136,34,.25);background:rgba(255,136,34,.06);margin-bottom:12px">';
-    h += '<div style="font-size:9px;color:#ff8822;font-weight:bold;margin-bottom:4px">ALERTE</div>';
-    h += '<div style="font-size:11px;color:#ff8822;line-height:1.5">' + raw.alerte + '</div></div>';
-  }
-
-  
+    h += '<div class="card" style="
