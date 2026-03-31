@@ -25,7 +25,7 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
   <div style="display:flex;gap:8px">
     <input id="ki" type="text" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
       style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(212,168,83,.3);color:#f0d080;padding:10px;border-radius:8px;font-size:13px;font-family:monospace;outline:none">
-    <button id="savebtn" onclick="saveKey()" style="padding:10px 16px;background:rgba(212,168,83,.2);border:1px solid rgba(212,168,83,.3);border-radius:8px;color:#d4a853;font-size:12px;font-weight:bold;cursor:pointer">Sauver</button>
+    <button id="savebtn" style="padding:10px 16px;background:rgba(212,168,83,.2);border:1px solid rgba(212,168,83,.3);border-radius:8px;color:#d4a853;font-size:12px;font-weight:bold;cursor:pointer">Sauver</button>
   </div>
   <div id="ks" style="font-size:10px;margin-top:6px;color:#5a8050"></div>
 </div>
@@ -35,41 +35,17 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
   <div id="clk" style="font-size:18px;font-weight:bold;margin-top:4px;color:#44aaff">--:--:--</div>
 </div>
 
-<!-- HORLOGE INLINE - juste apres l element -->
-<script>
-window.onerror = function(msg, src, line) {
-  var el = document.getElementById('jserr');
-  if (el) { el.style.display = 'block'; el.textContent = 'ERR L' + line + ': ' + msg; }
-};
-function p2(n) { return (n < 10 ? '0' : '') + n; }
-function tick() {
-  var d = new Date();
-  var hh = d.getHours();
-  var t = p2(hh) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
-  var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh < 16) ? 'EUROPE' : 'AMERIQUE';
-  var c = (sid === 'ASIE') ? '#ff6644' : (sid === 'EUROPE') ? '#44aaff' : '#00ff88';
-  var ck = document.getElementById('clk');
-  var ss = document.getElementById('sess');
-  var sb = document.getElementById('sb');
-  if (ck) { ck.textContent = t; ck.style.color = c; }
-  if (ss) { ss.textContent = 'LIVE - ' + sid; ss.style.color = c; }
-  if (sb) { sb.style.color = c; sb.style.borderColor = c + '44'; }
-}
-tick();
-setInterval(tick, 1000);
-</script>
-
 <div class="c">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <span style="color:#d4a853;font-size:10px;font-weight:bold">FINANCIALJUICE</span>
-    <button id="fjbtn" onclick="loadFJ()" style="font-size:9px;padding:4px 10px;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);border-radius:4px;color:#ffaa00;font-weight:bold;cursor:pointer">MAJ</button>
+    <button id="fjbtn" style="font-size:9px;padding:4px 10px;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);border-radius:4px;color:#ffaa00;font-weight:bold;cursor:pointer">MAJ</button>
   </div>
   <div id="fj" style="font-size:10px;color:#3a5570">Clique MAJ pour charger...</div>
 </div>
 
 <div style="display:flex;gap:8px;margin-bottom:12px">
-  <button id="sb" onclick="doScan()" style="flex:1;padding:14px;background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.35);border-radius:10px;color:#00ff88;font-size:13px;font-weight:bold;cursor:pointer">ANALYSER</button>
-  <button id="mb" onclick="toggleMock()" style="padding:14px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#4a6070;font-size:9px;font-weight:bold;cursor:pointer">MOCK</button>
+  <button id="sb" style="flex:1;padding:14px;background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.35);border-radius:10px;color:#00ff88;font-size:13px;font-weight:bold;cursor:pointer">ANALYSER</button>
+  <button id="mb" style="padding:14px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#4a6070;font-size:9px;font-weight:bold;cursor:pointer">MOCK</button>
 </div>
 
 <div id="lu" style="font-size:9px;color:#1e3040;margin-bottom:10px"></div>
@@ -81,7 +57,14 @@ setInterval(tick, 1000);
 <div id="dbg" style="display:none;border:1px solid rgba(100,100,255,.2);border-radius:10px;padding:10px;color:#6080ff;font-size:9px;margin-bottom:12px;word-break:break-all;max-height:150px;overflow:auto"></div>
 <div id="rs"></div>
 
+<!-- TOUT LE JS EN FIN DE BODY - apres que tous les elements existent -->
 <script>
+
+window.onerror = function(msg, src, line) {
+  var el = document.getElementById('jserr');
+  if (el) { el.style.display = 'block'; el.textContent = 'ERR L' + line + ': ' + msg; }
+};
+
 var GK = '';
 var GM = false;
 var FJD = null;
@@ -100,27 +83,50 @@ var MK = {
   alerte:'VIX baisse 27 surveiller DXY pour confirmer BUY'
 };
 
+function p2(n) { return (n < 10 ? '0' : '') + n; }
 function fmtTime(d) { return p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds()); }
+function fmtDT(d) { return p2(d.getDate()) + '/' + p2(d.getMonth()+1) + '/' + d.getFullYear() + ' ' + fmtTime(d); }
 
-try { var _k = localStorage.getItem('gk2'); if (_k && _k.length > 10) { GK = _k; document.getElementById('keysec').style.display = 'none'; } } catch(e) {}
+// Horloge
+function tick() {
+  var d = new Date();
+  var hh = d.getHours();
+  var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh < 16) ? 'EUROPE' : 'AMERIQUE';
+  var c = (sid === 'ASIE') ? '#ff6644' : (sid === 'EUROPE') ? '#44aaff' : '#00ff88';
+  document.getElementById('clk').textContent = fmtTime(d);
+  document.getElementById('clk').style.color = c;
+  document.getElementById('sess').textContent = 'LIVE - ' + sid;
+  document.getElementById('sess').style.color = c;
+  document.getElementById('sb').style.color = c;
+  document.getElementById('sb').style.borderColor = c + '44';
+}
+tick();
+setInterval(tick, 1000);
 
-function saveKey() {
+// Cle sauvegardee
+try {
+  var _k = localStorage.getItem('gk2');
+  if (_k && _k.length > 10) { GK = _k; document.getElementById('keysec').style.display = 'none'; }
+} catch(e) {}
+
+// Boutons - addEventListener APRES que tout le DOM existe
+document.getElementById('savebtn').addEventListener('click', function() {
   var v = document.getElementById('ki').value.trim();
   if (!v || v.length < 10) { document.getElementById('ks').textContent = 'Cle trop courte'; return; }
   GK = v;
   try { localStorage.setItem('gk2', v); } catch(e) {}
   document.getElementById('keysec').style.display = 'none';
   document.getElementById('lu').textContent = 'Cle sauvegardee';
-}
+});
 
-function toggleMock() {
+document.getElementById('mb').addEventListener('click', function() {
   GM = !GM;
-  var b = document.getElementById('mb');
-  b.textContent = GM ? 'MOCK ON' : 'MOCK';
-  b.style.background = GM ? 'rgba(255,204,68,.15)' : 'rgba(255,255,255,.03)';
-  b.style.color = GM ? '#ffcc44' : '#4a6070';
-}
+  this.textContent = GM ? 'MOCK ON' : 'MOCK';
+  this.style.background = GM ? 'rgba(255,204,68,.15)' : 'rgba(255,255,255,.03)';
+  this.style.color = GM ? '#ffcc44' : '#4a6070';
+});
 
+// Parser JSON
 function pj(txt) {
   var clean = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
   var found = null, start = 0;
@@ -164,6 +170,7 @@ function pj(txt) {
     entree:'?', sl:'?', tp:'?', resume:'Signal extrait auto', alerte:'' };
 }
 
+// Appel Gemini
 function gmCall(sys, usr, tok, cb) {
   if (!GK || GK.length < 10) { cb(new Error('Cle API manquante')); return; }
   var xhr = new XMLHttpRequest();
@@ -195,7 +202,8 @@ function gmCall(sys, usr, tok, cb) {
   }));
 }
 
-function loadFJ() {
+// FJ
+document.getElementById('fjbtn').addEventListener('click', function() {
   document.getElementById('fj').textContent = 'Scan en cours...';
   var sys = 'Expert XAU/USD. Cherche headlines recentes financialjuice.com impactant or, DXY, VIX, Fed, Trump, Iran. JSON sans markdown: {"h":[{"t":"headline","heure":"HH:MM","niv":"CRITIQUE","imp":"haussier"}],"resume":"synthese"}';
   gmCall(sys, 'Headlines FinancialJuice or XAU USD maintenant', 500, function(err, txt) {
@@ -218,8 +226,9 @@ function loadFJ() {
       document.getElementById('fj').innerHTML = h || 'Aucune headline';
     } catch(ex) { document.getElementById('fj').textContent = 'Parse error: ' + ex.message; }
   });
-}
+});
 
+// Prompt
 function getP() {
   var hh = new Date().getHours();
   var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh < 16) ? 'EUROPE' : 'AMERIQUE';
@@ -237,7 +246,8 @@ function getP() {
     '\n{"sig":"BUY","conf":72,"reg":"DOLLAR_REFUGE","reg_note":"raison","vix":"27.0","vix_dir":"baisse","us30":"45800","us30_var":"-1.7%","dxy":"100.2","y10":"4.41%","xau":"3120","xau_var":"+0.5%","trump":"texte","fed":"texte","geo":"texte","h1":"BUY","h4":"SELL","h1_note":"raison","h4_note":"raison","entree":"3100-3120","sl":"3060","tp":"3200","resume":"signal","alerte":"alerte"}';
 }
 
-function doScan() {
+// Scan
+document.getElementById('sb').addEventListener('click', function() {
   if (!GM && (!GK || GK.length < 10)) {
     document.getElementById('keysec').style.display = 'block';
     document.getElementById('er').style.display = 'block';
@@ -281,12 +291,13 @@ function doScan() {
     document.getElementById('er').textContent = 'Erreur: ' + msg;
   }
   if (GM) { setTimeout(function() { done(MK); }, 1500); return; }
-  gmCall(getP(), 'Analyse XAU/USD maintenant', 800, function(err, txt) {
+  gmCall(getP(), 'Analyse XAU/USD maintenant ' + fmtDT(new Date()), 800, function(err, txt) {
     if (err) { fail(err.message); return; }
     try { done(pj(txt)); } catch(ex) { fail('Parse: ' + ex.message); }
   });
-}
+});
 
+// Affichage
 function showR(raw) {
   var vv = parseFloat(raw.vix || '0');
   var vm = raw.vix_dir === 'monte';
@@ -348,8 +359,4 @@ function showR(raw) {
   if (raw.fed) ns.push({ src: 'FED', txt: raw.fed });
   if (raw.geo) ns.push({ src: 'GEOPOLITIQUE', txt: raw.geo });
   if (ns.length) {
-    h += '<div class="c" style="margin-bottom:12px">';
-    h += '<div style="font-size:9px;color:#4a7090;letter-spacing:3px;margin-bottom:10px">NEWS</div>';
-    for (var i = 0; i < ns.length; i++) {
-      h += '<div class="r"><div><div style="font-size:9px;color:#d4a853;font-weight:bold">' + ns[i].src + '</div>';
-      h += '<div style="font-size:10px;color:#6a8898;line-height:1.5
+    h += '<div class="c" style="marg
