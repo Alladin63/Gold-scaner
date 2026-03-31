@@ -17,7 +17,6 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
 <h1 style="font-size:20px;color:#d4a853;margin-bottom:4px">GOLD SESSION SCANNER</h1>
 <p style="font-size:9px;color:#3a5570;letter-spacing:2px;margin-bottom:14px">GEMINI FLASH - REGIME REFUGE - DXY INVERSE</p>
 
-<!-- ZONE ERREUR JS VISIBLE -->
 <div id="jserr" style="background:#300;border:2px solid #f44;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#ff6666;display:none"></div>
 
 <div id="keysec" class="c" style="border-color:#d4a85333;background:rgba(212,168,83,.06)">
@@ -26,27 +25,51 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
   <div style="display:flex;gap:8px">
     <input id="ki" type="text" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
       style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(212,168,83,.3);color:#f0d080;padding:10px;border-radius:8px;font-size:13px;font-family:monospace;outline:none">
-    <button id="savebtn" style="padding:10px 16px;background:rgba(212,168,83,.2);border:1px solid rgba(212,168,83,.3);border-radius:8px;color:#d4a853;font-size:12px;font-weight:bold;cursor:pointer">Sauver</button>
+    <button id="savebtn" onclick="saveKey()" style="padding:10px 16px;background:rgba(212,168,83,.2);border:1px solid rgba(212,168,83,.3);border-radius:8px;color:#d4a853;font-size:12px;font-weight:bold;cursor:pointer">Sauver</button>
   </div>
   <div id="ks" style="font-size:10px;margin-top:6px;color:#5a8050"></div>
 </div>
 
 <div class="c">
-  <div id="sess" style="font-size:11px;font-weight:bold;color:#44aaff">Chargement...</div>
+  <div id="sess" style="font-size:11px;font-weight:bold;color:#44aaff">SESSION</div>
   <div id="clk" style="font-size:18px;font-weight:bold;margin-top:4px;color:#44aaff">--:--:--</div>
 </div>
+
+<!-- HORLOGE INLINE - juste apres l element -->
+<script>
+window.onerror = function(msg, src, line) {
+  var el = document.getElementById('jserr');
+  if (el) { el.style.display = 'block'; el.textContent = 'ERR L' + line + ': ' + msg; }
+};
+function p2(n) { return (n < 10 ? '0' : '') + n; }
+function tick() {
+  var d = new Date();
+  var hh = d.getHours();
+  var t = p2(hh) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
+  var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh < 16) ? 'EUROPE' : 'AMERIQUE';
+  var c = (sid === 'ASIE') ? '#ff6644' : (sid === 'EUROPE') ? '#44aaff' : '#00ff88';
+  var ck = document.getElementById('clk');
+  var ss = document.getElementById('sess');
+  var sb = document.getElementById('sb');
+  if (ck) { ck.textContent = t; ck.style.color = c; }
+  if (ss) { ss.textContent = 'LIVE - ' + sid; ss.style.color = c; }
+  if (sb) { sb.style.color = c; sb.style.borderColor = c + '44'; }
+}
+tick();
+setInterval(tick, 1000);
+</script>
 
 <div class="c">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <span style="color:#d4a853;font-size:10px;font-weight:bold">FINANCIALJUICE</span>
-    <button id="fjbtn" style="font-size:9px;padding:4px 10px;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);border-radius:4px;color:#ffaa00;font-weight:bold;cursor:pointer">MAJ</button>
+    <button id="fjbtn" onclick="loadFJ()" style="font-size:9px;padding:4px 10px;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);border-radius:4px;color:#ffaa00;font-weight:bold;cursor:pointer">MAJ</button>
   </div>
   <div id="fj" style="font-size:10px;color:#3a5570">Clique MAJ pour charger...</div>
 </div>
 
 <div style="display:flex;gap:8px;margin-bottom:12px">
-  <button id="sb" style="flex:1;padding:14px;background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.35);border-radius:10px;color:#00ff88;font-size:13px;font-weight:bold;cursor:pointer">ANALYSER</button>
-  <button id="mb" style="padding:14px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#4a6070;font-size:9px;font-weight:bold;cursor:pointer">MOCK</button>
+  <button id="sb" onclick="doScan()" style="flex:1;padding:14px;background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.35);border-radius:10px;color:#00ff88;font-size:13px;font-weight:bold;cursor:pointer">ANALYSER</button>
+  <button id="mb" onclick="toggleMock()" style="padding:14px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#4a6070;font-size:9px;font-weight:bold;cursor:pointer">MOCK</button>
 </div>
 
 <div id="lu" style="font-size:9px;color:#1e3040;margin-bottom:10px"></div>
@@ -59,17 +82,6 @@ body{background:#050810;color:#b8ccd8;font-family:monospace;padding:12px}
 <div id="rs"></div>
 
 <script>
-
-// Capturer toutes les erreurs JS
-window.onerror = function(msg, src, line, col, err) {
-  var el = document.getElementById('jserr');
-  el.style.display = 'block';
-  el.textContent = 'JS ERROR ligne ' + line + ': ' + msg;
-  return false;
-};
-
-try {
-
 var GK = '';
 var GM = false;
 var FJD = null;
@@ -88,61 +100,30 @@ var MK = {
   alerte:'VIX baisse 27 surveiller DXY pour confirmer BUY'
 };
 
-function p2(n) { return (n < 10 ? '0' : '') + n; }
+function fmtTime(d) { return p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds()); }
 
-function fmtTime(d) {
-  return p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
-}
+try { var _k = localStorage.getItem('gk2'); if (_k && _k.length > 10) { GK = _k; document.getElementById('keysec').style.display = 'none'; } } catch(e) {}
 
-function fmtDT(d) {
-  return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + fmtTime(d);
-}
-
-// Cle sauvegardee
-try {
-  var _k = localStorage.getItem('gk2');
-  if (_k && _k.length > 10) {
-    GK = _k;
-    document.getElementById('keysec').style.display = 'none';
-  }
-} catch(e) {}
-
-document.getElementById('savebtn').onclick = function() {
+function saveKey() {
   var v = document.getElementById('ki').value.trim();
   if (!v || v.length < 10) { document.getElementById('ks').textContent = 'Cle trop courte'; return; }
   GK = v;
   try { localStorage.setItem('gk2', v); } catch(e) {}
   document.getElementById('keysec').style.display = 'none';
   document.getElementById('lu').textContent = 'Cle sauvegardee';
-};
-
-function tick() {
-  var d = new Date();
-  var hh = d.getHours();
-  var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh >= 7 && hh < 16) ? 'EUROPE' : 'AMERIQUE';
-  var c = (sid === 'ASIE') ? '#ff6644' : (sid === 'EUROPE') ? '#44aaff' : '#00ff88';
-  document.getElementById('clk').textContent = fmtTime(d);
-  document.getElementById('sess').textContent = 'LIVE - SESSION ' + sid;
-  document.getElementById('sess').style.color = c;
-  document.getElementById('clk').style.color = c;
-  document.getElementById('sb').style.color = c;
-  document.getElementById('sb').style.borderColor = c + '44';
 }
 
-tick();
-setInterval(tick, 1000);
-
-document.getElementById('mb').onclick = function() {
+function toggleMock() {
   GM = !GM;
-  this.textContent = GM ? 'MOCK ON' : 'MOCK';
-  this.style.background = GM ? 'rgba(255,204,68,.15)' : 'rgba(255,255,255,.03)';
-  this.style.color = GM ? '#ffcc44' : '#4a6070';
-};
+  var b = document.getElementById('mb');
+  b.textContent = GM ? 'MOCK ON' : 'MOCK';
+  b.style.background = GM ? 'rgba(255,204,68,.15)' : 'rgba(255,255,255,.03)';
+  b.style.color = GM ? '#ffcc44' : '#4a6070';
+}
 
 function pj(txt) {
   var clean = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
-  var found = null;
-  var start = 0;
+  var found = null, start = 0;
   while (!found) {
     var s = clean.indexOf('{', start);
     if (s < 0) break;
@@ -155,19 +136,14 @@ function pj(txt) {
     var sl = clean.slice(s, e + 1);
     if (sl.indexOf('"sig"') >= 0) {
       try { found = JSON.parse(sl); break; } catch(e1) {}
-      var fx = '';
-      var inS = false, esc = false;
+      var fx = '', inS = false, esc = false;
       for (var j = 0; j < sl.length; j++) {
         var ch = sl[j];
         if (esc) { fx += ch; esc = false; continue; }
         if (ch === '\\') { fx += ch; esc = true; continue; }
         if (ch === '"') { inS = !inS; fx += ch; continue; }
-        if (inS) {
-          if (ch === "'") { fx += ' '; continue; }
-          if (ch.charCodeAt(0) < 32) { fx += ' '; continue; }
-        } else {
-          if (ch === '\n' || ch === '\r') { fx += ' '; continue; }
-        }
+        if (inS) { if (ch === "'") { fx += ' '; continue; } if (ch.charCodeAt(0) < 32) { fx += ' '; continue; } }
+        else { if (ch === '\n' || ch === '\r') { fx += ' '; continue; } }
         fx += ch;
       }
       fx = fx.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
@@ -219,7 +195,7 @@ function gmCall(sys, usr, tok, cb) {
   }));
 }
 
-document.getElementById('fjbtn').onclick = function() {
+function loadFJ() {
   document.getElementById('fj').textContent = 'Scan en cours...';
   var sys = 'Expert XAU/USD. Cherche headlines recentes financialjuice.com impactant or, DXY, VIX, Fed, Trump, Iran. JSON sans markdown: {"h":[{"t":"headline","heure":"HH:MM","niv":"CRITIQUE","imp":"haussier"}],"resume":"synthese"}';
   gmCall(sys, 'Headlines FinancialJuice or XAU USD maintenant', 500, function(err, txt) {
@@ -242,11 +218,11 @@ document.getElementById('fjbtn').onclick = function() {
       document.getElementById('fj').innerHTML = h || 'Aucune headline';
     } catch(ex) { document.getElementById('fj').textContent = 'Parse error: ' + ex.message; }
   });
-};
+}
 
 function getP() {
   var hh = new Date().getHours();
-  var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh >= 7 && hh < 16) ? 'EUROPE' : 'AMERIQUE';
+  var sid = (hh >= 23 || hh < 7) ? 'ASIE' : (hh < 16) ? 'EUROPE' : 'AMERIQUE';
   var fj = '';
   if (FJD && FJD.h && FJD.h.length > 0) {
     var t = [];
@@ -254,14 +230,14 @@ function getP() {
     fj = 'Headlines: ' + t.join(' | ');
   }
   return 'Expert trader XAU/USD avec Google Search temps reel. Session: ' + sid + '. ' + fj +
-    '\n\nREGLE: DXY monte=OR BAISSE. DXY baisse=OR MONTE. Toujours.' +
+    '\nREGLE: DXY monte=OR BAISSE. DXY baisse=OR MONTE. Toujours.' +
     '\nREGIMES: VIX>25 OU conflit=DOLLAR_REFUGE. OR_REFUGE si VIX<20. RISK_ON si actions montent.' +
     '\nRecherche: XAU prix actuel, DXY valeur+direction, VIX, Trump, Fed, Iran.' +
     '\nJSON une ligne sans markdown sans apostrophe:' +
     '\n{"sig":"BUY","conf":72,"reg":"DOLLAR_REFUGE","reg_note":"raison","vix":"27.0","vix_dir":"baisse","us30":"45800","us30_var":"-1.7%","dxy":"100.2","y10":"4.41%","xau":"3120","xau_var":"+0.5%","trump":"texte","fed":"texte","geo":"texte","h1":"BUY","h4":"SELL","h1_note":"raison","h4_note":"raison","entree":"3100-3120","sl":"3060","tp":"3200","resume":"signal","alerte":"alerte"}';
 }
 
-document.getElementById('sb').onclick = function() {
+function doScan() {
   if (!GM && (!GK || GK.length < 10)) {
     document.getElementById('keysec').style.display = 'block';
     document.getElementById('er').style.display = 'block';
@@ -296,7 +272,6 @@ document.getElementById('sb').onclick = function() {
     HI.push({ raw: raw, t: fmtTime(new Date()) });
     document.getElementById('lu').textContent = 'Analyse: ' + fmtTime(new Date()) + ' - ' + HI.length + ' signal(s)';
   }
-
   function fail(msg) {
     clearInterval(TI);
     document.getElementById('ld').style.display = 'none';
@@ -305,13 +280,12 @@ document.getElementById('sb').onclick = function() {
     document.getElementById('er').style.display = 'block';
     document.getElementById('er').textContent = 'Erreur: ' + msg;
   }
-
   if (GM) { setTimeout(function() { done(MK); }, 1500); return; }
-  gmCall(getP(), 'Analyse XAU/USD maintenant ' + fmtDT(new Date()), 800, function(err, txt) {
+  gmCall(getP(), 'Analyse XAU/USD maintenant', 800, function(err, txt) {
     if (err) { fail(err.message); return; }
     try { done(pj(txt)); } catch(ex) { fail('Parse: ' + ex.message); }
   });
-};
+}
 
 function showR(raw) {
   var vv = parseFloat(raw.vix || '0');
@@ -319,21 +293,18 @@ function showR(raw) {
   var reg = raw.reg || 'DOLLAR_REFUGE';
   if ((vv > 25 || vm) && reg === 'OR_REFUGE') reg = 'DOLLAR_REFUGE';
   var sc = raw.sig === 'BUY' ? '#00ff88' : raw.sig === 'SELL' ? '#ff4466' : '#ffcc44';
-  var arrow = raw.sig === 'BUY' ? '[BUY +]' : raw.sig === 'SELL' ? '[SELL -]' : '[WAIT]';
+  var arrow = raw.sig === 'BUY' ? 'BUY [+]' : raw.sig === 'SELL' ? 'SELL [-]' : 'WAIT';
   var rLabel = reg === 'DOLLAR_REFUGE' ? 'DOLLAR = REFUGE' : reg === 'OR_REFUGE' ? 'OR = REFUGE' : 'RISK-ON';
   var rC = reg === 'DOLLAR_REFUGE' ? '#4488ff' : reg === 'OR_REFUGE' ? '#d4a853' : '#ff6644';
   var h = '';
-
   if (raw.alerte) {
     h += '<div class="c" style="border-color:rgba(255,136,34,.3);background:rgba(255,136,34,.06);margin-bottom:8px">';
     h += '<div style="font-size:9px;color:#ff8822;font-weight:bold;margin-bottom:4px">!! ALERTE</div>';
     h += '<div style="font-size:11px;color:#ff8822;line-height:1.5">' + raw.alerte + '</div></div>';
   }
-
-  h += '<div class="c" style="border-color:' + rC + '55;background:rgba(0,0,0,.3);margin-bottom:12px">';
+  h += '<div class="c" style="border-color:' + rC + '55;margin-bottom:12px">';
   h += '<div style="font-size:9px;color:' + rC + ';font-weight:bold;letter-spacing:2px;margin-bottom:4px">REGIME - ' + rLabel + '</div>';
   h += '<div style="font-size:11px;color:' + rC + 'aa;line-height:1.6">' + (raw.reg_note || '') + '</div></div>';
-
   var sc1 = raw.h1 === 'BUY' ? '#00ff88' : raw.h1 === 'SELL' ? '#ff4466' : '#ffcc44';
   var sc4 = raw.h4 === 'BUY' ? '#00ff88' : raw.h4 === 'SELL' ? '#ff4466' : '#ffcc44';
   h += '<div class="c" style="margin-bottom:12px">';
@@ -347,15 +318,12 @@ function showR(raw) {
   h += '<div style="font-size:9px;color:' + sc4 + ';font-weight:bold">H4</div>';
   h += '<div style="font-size:22px;font-weight:bold;color:' + sc4 + '">' + (raw.h4 || 'WAIT') + '</div>';
   h += '<div style="font-size:9px;color:' + sc4 + '88">' + (raw.h4_note || '') + '</div></div>';
-  h += '</div>';
-  h += '<div style="text-align:center;font-size:10px;color:' + (raw.h1 === raw.h4 ? '#00ff88' : '#ffcc44') + ';font-weight:bold">' + (raw.h1 === raw.h4 ? 'ALIGNES' : 'DIVERGENTS') + '</div></div>';
-
-  h += '<div class="c" style="border:2px solid ' + sc + '55;background:rgba(0,0,0,.6);margin-bottom:12px">';
+  h += '</div><div style="text-align:center;font-size:10px;color:' + (raw.h1 === raw.h4 ? '#00ff88' : '#ffcc44') + ';font-weight:bold">' + (raw.h1 === raw.h4 ? 'ALIGNES' : 'DIVERGENTS') + '</div></div>';
+  h += '<div class="c" style="border:2px solid ' + sc + '55;margin-bottom:12px">';
   h += '<div style="font-size:9px;color:#2a4060;letter-spacing:3px;margin-bottom:6px">SIGNAL FINAL - XAU/USD</div>';
   h += '<div style="font-size:40px;font-weight:bold;color:' + sc + ';line-height:1.1;margin-bottom:8px">' + arrow + '</div>';
   h += '<div style="font-size:12px;color:#6a8aaa;line-height:1.6;margin-bottom:10px">' + (raw.resume || '') + '</div>';
   h += '<div style="font-size:10px;color:#3a5060">CONFIANCE: <span style="color:' + sc + ';font-size:14px;font-weight:bold">' + (raw.conf || 55) + '%</span></div></div>';
-
   var ms = [
     { a: 'XAU/USD', p: raw.xau, v: raw.xau_var, c: '#d4a853' },
     { a: 'DXY', p: raw.dxy, v: vm ? 'monte' : 'baisse', c: '#4488ff' },
@@ -367,8 +335,7 @@ function showR(raw) {
   h += '<div style="font-size:9px;color:#4a7090;letter-spacing:3px;margin-bottom:10px">MARCHES EN DIRECT</div>';
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   for (var i = 0; i < ms.length; i++) {
-    var m = ms[i];
-    if (!m.p || m.p === '?') continue;
+    var m = ms[i]; if (!m.p || m.p === '?') continue;
     var vc = (m.v && m.v.indexOf('-') >= 0) ? '#ff4466' : '#00ff88';
     h += '<div style="border:1px solid ' + m.c + '33;border-radius:8px;padding:10px">';
     h += '<div style="font-size:9px;color:' + m.c + ';font-weight:bold">' + m.a + '</div>';
@@ -376,10 +343,13 @@ function showR(raw) {
     h += '<div style="font-size:11px;color:' + vc + '">' + m.v + '</div></div>';
   }
   h += '</div></div>';
-
   var ns = [];
   if (raw.trump) ns.push({ src: 'TRUMP', txt: raw.trump });
   if (raw.fed) ns.push({ src: 'FED', txt: raw.fed });
   if (raw.geo) ns.push({ src: 'GEOPOLITIQUE', txt: raw.geo });
   if (ns.length) {
-    h += '<div class="c" styl
+    h += '<div class="c" style="margin-bottom:12px">';
+    h += '<div style="font-size:9px;color:#4a7090;letter-spacing:3px;margin-bottom:10px">NEWS</div>';
+    for (var i = 0; i < ns.length; i++) {
+      h += '<div class="r"><div><div style="font-size:9px;color:#d4a853;font-weight:bold">' + ns[i].src + '</div>';
+      h += '<div style="font-size:10px;color:#6a8898;line-height:1.5
